@@ -1,4 +1,4 @@
-#' Title
+#' int_res_all_mark
 #' @description
 #' This function performs a overall differential gene expression analysis using
 #' Seurat's FindAllMarkers() at a chosen number of resultions and saves both
@@ -19,17 +19,16 @@
 #' @param test_use statistical approach being used for differential gene expression
 #' analysis. Default is MAST.
 #'
-#' @return creates lists of differentially expressed genes between clusters of
-#' interest.
+#' @return saves lists of differentially expressed genes between clusters of
+#' interest to output folders once filtered once unfiltered.
 #' @import Seurat MAST
 #' @export
 #'
 #' @examples
 #' library(Seurat)
 #' pbmc_small_test <- seurat_proc(pbmc_small, tsne = FALSE)
-#' resol_markers <- int_res_all_mark(pbmc_small_test,
-#'                                    int_cols = c("RNA_snn_res.0.8",
-#'                                                  "RNA_snn_res.1"))
+#' int_res_all_mark(pbmc_small_test, int_cols = c("RNA_snn_res.0.8",
+#'                                                 "RNA_snn_res.1"))
 int_res_all_mark <- function(seur_obj,
                              int_cols,
                              only_pos = TRUE,
@@ -50,8 +49,10 @@ int_res_all_mark <- function(seur_obj,
                       all_mark$pct.1 > fil_pct_1 &
                         all_mark$pct.2 < fil_pct_2 )
 
+
     write.csv(all_mark, paste(save_dir, "/all_mark", int_cols[i], ".csv", sep = "" ))
     write.csv(fil_mark, paste(save_dir, "/fil_mark", int_cols[i], ".csv", sep = "" ))
+
 
   }
 }

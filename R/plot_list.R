@@ -22,9 +22,9 @@
 #' library(RColorBrewer)
 #' library(ggsci)
 #' pbmc_small_test <- seurat_proc(pbmc_small, tsne = FALSE)
-#' plot_list_func(pbmc_small_test)
+#' plot_list(pbmc_small_test)
 
-plot_list_func <- function(seur_obj,
+plot_list <- function(seur_obj,
                            col_pattern = "RNA_snn_res.",
                            plot_cols = colour_palette(),
                            clust_lab = TRUE,

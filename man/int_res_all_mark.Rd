@@ -2,7 +2,7 @@
 % Please edit documentation in R/int_res_all_mark.R
 \name{int_res_all_mark}
 \alias{int_res_all_mark}
-\title{Title}
+\title{int_res_all_mark}
 \usage{
 int_res_all_mark(
   seur_obj,
@@ -42,8 +42,8 @@ current working directory}
 analysis. Default is MAST.}
 }
 \value{
-creates lists of differentially expressed genes between clusters of
-interest.
+saves lists of differentially expressed genes between clusters of
+interest to output folders once filtered once unfiltered.
 }
 \description{
 This function performs a overall differential gene expression analysis using
@@ -53,7 +53,6 @@ raw and filtered lists in a provided output directory.
 \examples{
 library(Seurat)
 pbmc_small_test <- seurat_proc(pbmc_small, tsne = FALSE)
-resol_markers <- int_res_all_mark(pbmc_small_test,
-                                   int_cols = c("RNA_snn_res.0.8",
-                                                 "RNA_snn_res.1"))
+int_res_all_mark(pbmc_small_test, int_cols = c("RNA_snn_res.0.8",
+                                                "RNA_snn_res.1"))
 }

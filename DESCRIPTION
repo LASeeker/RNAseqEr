@@ -16,10 +16,14 @@ Imports:
     gtools,
     ggsci,
     RColorBrewer,
-    MAST
+    MAST,
+    here,
+    dplyr
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 License: MIT + file LICENSE
 URL: https://github.com/LASeeker/RNAseqEr
 BugReports: https://github.com/LASeeker/RNAseqEr/issues
+Depends: 
+    R (>= 2.10)
