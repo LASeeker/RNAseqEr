@@ -9,7 +9,7 @@ clu_pure(
   seur_obj,
   reduction = "PCA",
   col_pattern = "RNA_snn_res",
-  plot_cols,
+  plot_cols = colour_palette(),
   clust_lab = TRUE,
   label_size = 8,
   save_dir = getwd(),

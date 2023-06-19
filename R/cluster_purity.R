@@ -31,7 +31,7 @@
 clu_pure <- function(seur_obj,
                      reduction = "PCA",
                      col_pattern = "RNA_snn_res",
-                     plot_cols,
+                     plot_cols = colour_palette(),
                      clust_lab = TRUE,
                      label_size = 8,
                      save_dir = getwd(),
@@ -42,7 +42,7 @@ clu_pure <- function(seur_obj,
   names_col <- names(colData(sce_obj))[res_col]
   # gtools function, sorts gene_names alphanumeric:
   names_col <- mixedsort(names_col)
-  met_dat <- as.data.frame(colData(nad_ol_sce))
+  met_dat <- as.data.frame(colData(sce_obj))
 
   for(i in 1: length(names_col)){
     clust <- met_dat[[names_col[i]]]
@@ -54,17 +54,15 @@ clu_pure <- function(seur_obj,
     pure_data$maximum <- factor(pure_data$maximum)
     pure_data$cluster <- factor(clust_int)
 
-
     pure_plot <- ggplot(pure_data, aes(x=cluster, y=purity, colour=maximum)) +
       ggbeeswarm::geom_quasirandom(method="smiley") +
       theme_bw(20) +
       xlab(names_col[i])
 
-
     pdf(paste0(save_dir,
                "/",
                names_col[i],
-               "_sil.pdf"),
+               "_clu_purity.pdf"),
         width=width,
         height=height)
 
@@ -75,6 +73,5 @@ clu_pure <- function(seur_obj,
     print(pure_plot)
     }
   }
-  print("Done with calculating and plotting cluster purity measures at selected
-        resolutions")
+  print("Done with calculating and plotting cluster purity measures at selected resolutions")
 }

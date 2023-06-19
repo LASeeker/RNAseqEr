@@ -158,5 +158,6 @@ differential gene expression analysis, and gene intology analysis.
 }
 \examples{
 library(Seurat)
+library(clustree)
 seur <- quick_RNAseqEr(pbmc_small, tsne = FALSE)
 }

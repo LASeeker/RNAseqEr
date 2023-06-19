@@ -78,9 +78,10 @@
 #' @export
 #' @import Seurat SingleCellExperiment gtools ggsci RColorBrewer MAST
 #'    here dplyr clusterProfiler org.Hs.eg.db SingleCellExperiment cluster
-#'    bluster ggplot2 ggbeeswarm
+#'    bluster ggplot2 ggbeeswarm clustree
 #' @examples
 #' library(Seurat)
+#' library(clustree)
 #' seur <- quick_RNAseqEr(pbmc_small, tsne = FALSE)
 quick_RNAseqEr <- function(seur_obj,
                            n_pcs = 20,
@@ -146,12 +147,18 @@ quick_RNAseqEr <- function(seur_obj,
 
   # plot dimensionally reduced data at different clustering resolutions and
   # save to file
-  plot_dir <- paste(save_dir, "outs", "plots", sep = "/")
+  plot_dir_resol <- paste(save_dir,
+                          "outs",
+                          "plots",
+                          "resolution_plots",
+                          sep = "/")
 
-  if(dir.exists(plot_dir) == FALSE){
-    dir.create(plot_dir, recursive = TRUE)
-    print("new directory created for saving plots")
+  if(dir.exists(plot_dir_resol) == FALSE){
+    dir.create(plot_dir_resol, recursive = TRUE)
+    print("New directory created for saving plots in general and DimPlots at different
+          resolutions in particular")
   }
+
 
 
   plot_list(seur_obj = seur_obj,
@@ -173,7 +180,7 @@ quick_RNAseqEr <- function(seur_obj,
 
   if(dir.exists(sil_plot_dir) == FALSE){
     dir.create(sil_plot_dir, recursive = TRUE)
-    print("new directory created for saving silhouette plots")
+    print("New directory created for saving silhouette plots")
   }
 
 
@@ -196,7 +203,7 @@ quick_RNAseqEr <- function(seur_obj,
 
   if(dir.exists(appr_sil_dir) == FALSE){
     dir.create(appr_sil_dir, recursive = TRUE)
-    print("new directory created for saving approximate silhouette plots")
+    print("New directory created for saving approximate silhouette plots")
   }
 
 
@@ -208,6 +215,56 @@ quick_RNAseqEr <- function(seur_obj,
              label_size = label_size,
              save_dir = appr_sil_dir,
              height= height)
+
+  # Calculate and plut cluster purity measures
+
+  clu_pur_dir <- paste(save_dir,
+                        "outs",
+                        "plots",
+                        "clu_pur_dir",
+                        sep = "/")
+
+  if(dir.exists(clu_pur_dir) == FALSE){
+    dir.create(clu_pur_dir, recursive = TRUE)
+    print("New directory created for saving cluster purity plots")
+  }
+
+
+  clu_pure(seur_obj,
+           reduction = reduction_sil,
+           col_pattern = col_pattern,
+           plot_cols = plot_cols,
+           clust_lab = clust_lab_sil,
+           label_size = label_size,
+           save_dir = clu_pur_dir,
+           width=7,
+           height=5)
+
+  # Print cluster tree
+  clu_tree_dir <- paste(save_dir,
+                       "outs",
+                       "plots",
+                       "clu_tree_dir",
+                       sep = "/")
+
+  if(dir.exists(clu_tree_dir) == FALSE){
+    dir.create(clu_tree_dir, recursive = TRUE)
+    print("New directory created for saving a cluster tree plot")
+  }
+
+  cluster_tree <- clustree(seur_obj,
+                           prefix = col_pattern,
+                           exprs = c("data", "counts", "scale.data"),
+                           assay = NULL
+                           )
+
+  pdf(paste(clu_tree_dir, "/cluster_tree.pdf"),
+      paper="a4", width=8, height=11.5)
+
+  print(cluster_tree)
+
+  dev.off()
+
 
 
   #perform differential gene expression analysis at different resolutions and
@@ -279,6 +336,15 @@ quick_RNAseqEr <- function(seur_obj,
                             pct_2 = pct_2,
                             pairwise = TRUE,
                             n_top = n_top)
+
+  # concatenate genes of clu_mark and clu_mark_pw to list of interesting genes
+
+  int_genes <- c(clu_mark$gene, clu_mark_pw$gene)
+  int_genes <- unique(int_genes)
+
+
+  #plot heatmap with interesting genes
+
 
 
 

@@ -31,7 +31,7 @@
 #'
 #' perform_go(pbmc_small, gene_list = dge_1_0)
 #'
-perform_go <- function(srt,
+perform_go <- function(seur_obj,
                        gene_list,
                        min_log2FC = 0.25,
                        reverse = FALSE,
@@ -64,7 +64,7 @@ perform_go <- function(srt,
   go_genes <- genes_entrez$ENTREZID
   ego <- enrichGO(
     gene = go_genes,
-    universe = names(rownames(srt)),
+    universe = names(rownames(seur_obj)),
     OrgDb = org_use,
     ont = ontology,
     pAdjustMethod = "BH",

@@ -25,7 +25,8 @@ Imports:
     cluster,
     ggplot2,
     bluster,
-    ggbeeswarm
+    ggbeeswarm,
+    clustree
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
