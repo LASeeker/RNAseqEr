@@ -31,40 +31,46 @@
 #' library(Seurat)
 #' pbmc_small_test <- seurat_proc(pbmc_small, tsne = FALSE)
 #' pairwise_markers <- pairwise_dge(pbmc_small_test,
-#'                                    int_cols = "RNA_snn_res.0.8")
+#'   int_cols = "RNA_snn_res.0.8"
+#' )
 #'
 pairwise_dge <- function(seur_obj,
-                          int_cols,
-                          only_pos = TRUE,
-                          min_pct = 0.25,
-                          logfc_threshold = 0.25,
-                          fil_pct_1 = 0.25,
-                          fil_pct_2 = 0.1,
-                          save_dir = getwd(),
-                          test_use = "MAST",
-                          assay_use = "RNA"){
-  for(k in 1:length(int_cols)){
+                         int_cols,
+                         only_pos = TRUE,
+                         min_pct = 0.25,
+                         logfc_threshold = 0.25,
+                         fil_pct_1 = 0.25,
+                         fil_pct_2 = 0.1,
+                         save_dir = getwd(),
+                         test_use = "MAST",
+                         assay_use = "RNA") {
+  for (k in 1:length(int_cols)) {
     Idents(seur_obj) <- int_cols[k]
     # create all pairwise combinations at the picked resolution
-    clust_id_list <- combn(levels(as.factor(seur_obj@meta.data[[int_cols]])),2)
-    for(i in 1:ncol(clust_id_list)){
+    clust_id_list <- combn(levels(as.factor(seur_obj@meta.data[[int_cols]])), 2)
+    for (i in 1:ncol(clust_id_list)) {
       clust_mark <- FindMarkers(seur_obj,
-                                ident.1 = clust_id_list[,i][[1]],
-                                ident.2 = clust_id_list[,i][[2]],
-                                min.pct = min_pct,
-                                test.use = test_use,
-                                assay = assay_use )
-      clust_mark$cluster <- clust_id_list[,i][[1]]
-      clust_mark$comp_to_clust <- clust_id_list[,i][[2]]
-      write.csv(clust_mark,
-                paste(save_dir,
-                      "/",
-                      int_cols[k],
-                      "_",
-                      clust_id_list[,i][[1]],
-                      "_",
-                      clust_id_list[,i][[2]],
-                      ".csv", sep = "" ))
+        ident.1 = clust_id_list[, i][[1]],
+        ident.2 = clust_id_list[, i][[2]],
+        min.pct = min_pct,
+        test.use = test_use,
+        assay = assay_use
+      )
+      clust_mark$cluster <- clust_id_list[, i][[1]]
+      clust_mark$comp_to_clust <- clust_id_list[, i][[2]]
+      write.csv(
+        clust_mark,
+        paste(save_dir,
+          "/",
+          int_cols[k],
+          "_",
+          clust_id_list[, i][[1]],
+          "_",
+          clust_id_list[, i][[2]],
+          ".csv",
+          sep = ""
+        )
+      )
     }
   }
 }

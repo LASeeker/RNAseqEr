@@ -18,7 +18,14 @@ Imports:
     RColorBrewer,
     MAST,
     here,
-    dplyr
+    dplyr,
+    clusterProfiler,
+    org.Hs.eg.db,
+    SingleCellExperiment,
+    cluster,
+    ggplot2,
+    bluster,
+    ggbeeswarm
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

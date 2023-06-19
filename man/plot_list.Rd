@@ -22,13 +22,15 @@ plot_list(
 \item{col_pattern}{name pattern used to identify columns that contain clustering
 information at different resolutions. Default is "RNA_snn_res."}
 
-\item{plot_cols}{color palette}
+\item{plot_cols}{color palette default is colour_pallette() from the RNAseqEr
+package}
 
 \item{clust_lab}{Whether DimPlot should be annotated with clusters labels}
 
 \item{label_size}{size of cluster labels}
 
-\item{save_dir}{file path to where plots should be saved}
+\item{save_dir}{file path to where plots should be saved, default is working
+directory}
 
 \item{width}{width of pdf file}
 

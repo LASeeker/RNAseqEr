@@ -60,6 +60,7 @@ file for each comparison.
 library(Seurat)
 pbmc_small_test <- seurat_proc(pbmc_small, tsne = FALSE)
 pairwise_markers <- pairwise_dge(pbmc_small_test,
-                                   int_cols = "RNA_snn_res.0.8")
+  int_cols = "RNA_snn_res.0.8"
+)
 
 }

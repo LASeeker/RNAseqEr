@@ -14,7 +14,8 @@ seurat_proc(
 )
 }
 \arguments{
-\item{seur_obj}{A Seurat object that has been quality controlled}
+\item{seur_obj}{A Seurat object that has been quality controlled and if
+necessary batch corrected and integrated}
 
 \item{n_pcs}{number of dimensions (1:n_pcs) used for findNeighbors() and and
 non linear dimensional reduction (UMAP, TSNE).}

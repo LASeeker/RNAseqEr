@@ -53,6 +53,8 @@ raw and filtered lists in a provided output directory.
 \examples{
 library(Seurat)
 pbmc_small_test <- seurat_proc(pbmc_small, tsne = FALSE)
-int_res_all_mark(pbmc_small_test, int_cols = c("RNA_snn_res.0.8",
-                                                "RNA_snn_res.1"))
+int_res_all_mark(pbmc_small_test, int_cols = c(
+  "RNA_snn_res.0.8",
+  "RNA_snn_res.1"
+))
 }

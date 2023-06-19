@@ -27,8 +27,10 @@
 #' @examples
 #' library(Seurat)
 #' pbmc_small_test <- seurat_proc(pbmc_small, tsne = FALSE)
-#' int_res_all_mark(pbmc_small_test, int_cols = c("RNA_snn_res.0.8",
-#'                                                 "RNA_snn_res.1"))
+#' int_res_all_mark(pbmc_small_test, int_cols = c(
+#'   "RNA_snn_res.0.8",
+#'   "RNA_snn_res.1"
+#' ))
 int_res_all_mark <- function(seur_obj,
                              int_cols,
                              only_pos = TRUE,
@@ -37,22 +39,25 @@ int_res_all_mark <- function(seur_obj,
                              fil_pct_1 = 0.25,
                              fil_pct_2 = 0.6,
                              save_dir = getwd(),
-                             test_use = "MAST"){
-  for(i in 1:length(int_cols)){
+                             test_use = "MAST") {
+  for (i in 1:length(int_cols)) {
     Idents(seur_obj) <- int_cols[i]
-    all_mark <- FindAllMarkers(seur_obj,
-                               only.pos = only_pos,
-                               min.pct = min_pct,
-                               logfc.threshold = logfc_threshold,
-                               test.use = test_use)
-    fil_mark<- subset(all_mark,
-                      all_mark$pct.1 > fil_pct_1 &
-                        all_mark$pct.2 < fil_pct_2 )
+    if(length(levels(Idents(seur_obj))) > 1){
+      all_mark <- FindAllMarkers(seur_obj,
+        only.pos = only_pos,
+        min.pct = min_pct,
+        logfc.threshold = logfc_threshold,
+        test.use = test_use
+      )
+      fil_mark <- subset(
+        all_mark,
+        all_mark$pct.1 > fil_pct_1 &
+          all_mark$pct.2 < fil_pct_2
+      )
 
 
-    write.csv(all_mark, paste(save_dir, "/all_mark", int_cols[i], ".csv", sep = "" ))
-    write.csv(fil_mark, paste(save_dir, "/fil_mark", int_cols[i], ".csv", sep = "" ))
-
-
+      write.csv(all_mark, paste(save_dir, "/all_mark", int_cols[i], ".csv", sep = ""))
+      write.csv(fil_mark, paste(save_dir, "/fil_mark", int_cols[i], ".csv", sep = ""))
+    }
   }
 }
