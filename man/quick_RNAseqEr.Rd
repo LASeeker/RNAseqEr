@@ -40,7 +40,12 @@ quick_RNAseqEr(
   avg_log = 1.2,
   pct_1 = 0.25,
   pct_2 = 0.6,
-  n_top = 10
+  n_top = 10,
+  use_resol = TRUE,
+  col_names,
+  col_pattern_hm = "RNA_snn_res",
+  label_hm = TRUE,
+  draw_lines = FALSE
 )
 }
 \arguments{
@@ -145,10 +150,26 @@ Default filter for cells outside the cluster of interest expressing the gene is 
 
 \item{n_top}{number of top genes per cluster considered for compiling a list
 of potentially interesting marker genes. Default is 10 genes per cluster.}
+
+\item{use_resol}{For heatmap. TRUE/FALSE whether column labels should be used that indicate
+standard names for different clustering resolutions opposed to user indicated
+cluster labels that for example specify a cell type. Default is TRUE.}
+
+\item{col_names}{For heatmap. If use_resol = FALSE a string of at least one column names
+has to be provided.}
+
+\item{col_pattern_hm}{For heatmap. If use_resol = TRUE, the column name pattern
+that should be used for heatmap. Likely to equal col_pattern above.}
+
+\item{label_hm}{TRUE/FALSE whether cluster labels should be displayed on heatmap.
+Default is TRUE}
+
+\item{draw_lines}{For heatmap. TRUE/FALSE whether white lines should be drawn between columns
+corresponding to each cluster. Default is FALSE}
 }
 \value{
-saves a lot of output data in newly generated folders. RETURNS AN
-UPDATE SEURAT OBJ (IMPLEMENT!)
+saves output data in newly generated folders. Returns an
+updated Seurat object with clustering information and dimensional reductions.
 }
 \description{
 This function takes a quality controlled, and if necessary batch corrected

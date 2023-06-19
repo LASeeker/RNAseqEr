@@ -10,10 +10,13 @@ heatmap_seqEr(
   col_names,
   col_pattern = "RNA_snn_res",
   int_genes,
+  gene_count = 50,
   save_dir = getwd(),
   label = TRUE,
   plot_cols = colour_palette(),
-  draw_lines = FALSE
+  draw_lines = FALSE,
+  width = 5,
+  height = 7
 )
 }
 \arguments{
@@ -32,6 +35,9 @@ Default is"RNA_snn_res"}
 
 \item{int_genes}{list of interesting genes that should be tested.}
 
+\item{gene_count}{if list of interesting genes is long it will be shortened
+to gene_count. Default is 50.}
+
 \item{save_dir}{where output should be saved, default is working directory}
 
 \item{label}{TRUE/FALSE wheter cluster labels should be displayed on plot.
@@ -42,6 +48,10 @@ package}
 
 \item{draw_lines}{TRUE/FALSE whether white lines should be drawn between columns
 corresponding to each cluster. Default is FALSE}
+
+\item{width}{width of output plot. Default is 5.}
+
+\item{height}{heigth of output plot. Default is 7.}
 }
 \value{
 saves plots to file

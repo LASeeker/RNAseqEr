@@ -72,9 +72,20 @@
 #' Default filter for cells outside the cluster of interest expressing the gene is 0.1.
 #' @param n_top number of top genes per cluster considered for compiling a list
 #' of potentially interesting marker genes. Default is 10 genes per cluster.
+#' @param use_resol For heatmap. TRUE/FALSE whether column labels should be used that indicate
+#' standard names for different clustering resolutions opposed to user indicated
+#' cluster labels that for example specify a cell type. Default is TRUE.
+#' @param col_pattern_hm For heatmap. If use_resol = TRUE, the column name pattern
+#' that should be used for heatmap. Likely to equal col_pattern above.
+#' @param col_names For heatmap. If use_resol = FALSE a string of at least one column names
+#' has to be provided.
+#' @param label_hm TRUE/FALSE whether cluster labels should be displayed on heatmap.
+#' Default is TRUE
+#' @param draw_lines For heatmap. TRUE/FALSE whether white lines should be drawn between columns
+#' corresponding to each cluster. Default is FALSE
 #'
-#' @return saves a lot of output data in newly generated folders. RETURNS AN
-#' UPDATE SEURAT OBJ (IMPLEMENT!)
+#' @return saves output data in newly generated folders. Returns an
+#' updated Seurat object with clustering information and dimensional reductions.
 #' @export
 #' @import Seurat SingleCellExperiment gtools ggsci RColorBrewer MAST
 #'    here dplyr clusterProfiler org.Hs.eg.db SingleCellExperiment cluster
@@ -134,8 +145,14 @@ quick_RNAseqEr <- function(seur_obj,
                            avg_log = 1.2,
                            pct_1 = 0.25,
                            pct_2 = 0.6,
-                           n_top = 10
+                           n_top = 10,
 
+                           #for creating heatmaps
+                           use_resol = TRUE,
+                           col_names,
+                           col_pattern_hm = "RNA_snn_res",
+                           label_hm = TRUE,
+                           draw_lines = FALSE
                            ){
   # Perform standard Seurat processing
   seur_obj <- seurat_proc(seur_obj,
@@ -166,7 +183,7 @@ quick_RNAseqEr <- function(seur_obj,
             plot_cols = plot_cols ,
             clust_lab = clust_lab,
             label_size = label_size,
-            save_dir = plot_dir,
+            save_dir = plot_dir_resol,
             width=width,
             height=height,
             use_reduction = use_reduction)
@@ -258,7 +275,7 @@ quick_RNAseqEr <- function(seur_obj,
                            assay = NULL
                            )
 
-  pdf(paste(clu_tree_dir, "/cluster_tree.pdf"),
+  pdf(paste0(clu_tree_dir, "/cluster_tree.pdf"),
       paper="a4", width=8, height=11.5)
 
   print(cluster_tree)
@@ -344,8 +361,29 @@ quick_RNAseqEr <- function(seur_obj,
 
 
   #plot heatmap with interesting genes
+  hm_dir <- paste(save_dir,
+                  "outs",
+                  "plots",
+                  "heatmaps",
+                  sep = "/")
+
+  if(dir.exists(hm_dir) == FALSE){
+    dir.create(hm_dir, recursive = TRUE)
+    print("New directory created for saving heatmaps")
+  }
+
+  heatmap_seqEr(seur_obj,
+                use_resol = use_resol,
+                col_names,
+                col_pattern = col_pattern_hm,
+                int_genes,
+                save_dir = hm_dir,
+                label = label_hm,
+                plot_cols = colour_palette(),
+                draw_lines = draw_lines)
 
 
+  return(seur_obj)
 
 
 
