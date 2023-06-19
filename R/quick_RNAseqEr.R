@@ -83,6 +83,37 @@
 #' Default is TRUE
 #' @param draw_lines For heatmap. TRUE/FALSE whether white lines should be drawn between columns
 #' corresponding to each cluster. Default is FALSE
+#' @param min_log2FC_go min log2FC considered for GO. Default is 0.25.
+#' @param reverse_go TRUE/FALSE whether ADD DESCRIPTION. Default is FALSE.
+#' @param translate_gene_id_from format in which genes are saved in Seurat object,
+#' default is "SYMBOL".
+#' @param translate_gene_id_to Format to which gebe symbol should be translated
+#' for gene ontology analysis. Default is "ENTREZID"
+#' @param org_use organism being used for gene ontology. Default is "org.Hs.eg.db"
+#' which is human
+#' @param ontology What kind of gene ontology should be performed. Default is "BP" for
+#' biological pathway but "MF" for molecular function for example is valid, too.
+#' @param pvalue_cutoff_go P-value cutoff for gene ontology. Default is 0.05.
+#' @param qvalue_cutoff_go Cutoff for gene ontology q-value. Default is 0.05.
+#' @param read_able TRUE/FALSE whether gene names should be readable in output tables
+#' SAVE OUTPUT TABLES AND PLOTS!
+#' @param do_seurat_proc TRUE/FALSE (default = TRUE) whether standard Seurat processing including
+#' normalisation, dimensional reduction and clustering at different resolutions
+#' should be performed.
+#' @param do_dimplots TRUE/FALSE (default = TRUE) whether DimPlots at different resolutions should
+#' be plotted and saved to file.
+#' @param do_silhouette TRUE/FALSE (default = TRUE) whether silhouette plots
+#' should be plotted and saved to file
+#' @param do_purity TRUE/FALSE (default = TRUE) whether cluster purity plots
+#' should be plotted and saved to file
+#' @param do_dge TRUE/FALSE (default = TRUE) whether differential gene
+#' expression should be performed. N.B. this may take a long time as
+#' DGE will be performed at all resolutions and also at pairwise for all possible
+#' cluster combinations at all resolutions
+#' @param do_heatmap TRUE/FALSE (default = TRUE) whether heatmaps
+#' should be plotted and saved to file
+#' @param do_go TRUE/FALSE (default = TRUE) whether gene ontology should be performed
+#' THINK ABOUT GENE INPUT AND GROUPING
 #'
 #' @return saves output data in newly generated folders. Returns an
 #' updated Seurat object with clustering information and dimensional reductions.
@@ -152,18 +183,43 @@ quick_RNAseqEr <- function(seur_obj,
                            col_names,
                            col_pattern_hm = "RNA_snn_res",
                            label_hm = TRUE,
-                           draw_lines = FALSE
+                           draw_lines = FALSE,
+
+                           #for running gene ontology analysis
+                           gene_list,
+                           min_log2FC_go = 0.25,
+                           reverse_go = FALSE,
+                           translate_gene_id_from = "SYMBOL",
+                           translate_gene_id_to = "ENTREZID",
+                           org_use = "org.Hs.eg.db",
+                           ontology = "BP",
+                           pvalue_cutoff_go = 0.05,
+                           qvalue_cutoff_go = 0.05,
+                           read_able = TRUE,
+
+
+                           #specify which steps to do
+                           do_seurat_proc = TRUE,
+                           do_dimplots = TRUE,
+                           do_silhouette = TRUE,
+                           do_purity = TRUE,
+                           do_dge = TRUE,
+                           do_heatmap = TRUE,
+                           do_go =FALSE #SET TO TRUE IF CORRECTLY IMPLEMENTED
                            ){
   # Perform standard Seurat processing
+  if(do_seurat_proc == TRUE){
   seur_obj <- seurat_proc(seur_obj,
                           n_pcs = n_pcs,
                           res = res,
                           select_genes = select_genes,
                           elbow_dims = elbow_dims,
                           tsne = tsne)
+  }
 
   # plot dimensionally reduced data at different clustering resolutions and
   # save to file
+  if(do_dimplots == TRUE){
   plot_dir_resol <- paste(save_dir,
                           "outs",
                           "plots",
@@ -187,8 +243,10 @@ quick_RNAseqEr <- function(seur_obj,
             width=width,
             height=height,
             use_reduction = use_reduction)
+  }
 
   # save cluster some indication of cluster stability
+  if(do_silhouette == TRUE) {
   sil_plot_dir <- paste(save_dir,
                         "outs",
                         "plots",
@@ -232,8 +290,10 @@ quick_RNAseqEr <- function(seur_obj,
              label_size = label_size,
              save_dir = appr_sil_dir,
              height= height)
+  }
 
   # Calculate and plut cluster purity measures
+  if(do_purity == TRUE){
 
   clu_pur_dir <- paste(save_dir,
                         "outs",
@@ -256,6 +316,7 @@ quick_RNAseqEr <- function(seur_obj,
            save_dir = clu_pur_dir,
            width=7,
            height=5)
+  }
 
   # Print cluster tree
   clu_tree_dir <- paste(save_dir,
@@ -286,6 +347,7 @@ quick_RNAseqEr <- function(seur_obj,
 
   #perform differential gene expression analysis at different resolutions and
   # save results to file
+  if(do_dge == TRUE){
   dge_dir <- paste(save_dir,
                    "outs",
                    "tables",
@@ -335,6 +397,7 @@ quick_RNAseqEr <- function(seur_obj,
                            test_use = "MAST",
                            assay_use = "RNA")
 
+
   # use DGE results to plot heatmap and decide on clustering resolution
 
 
@@ -358,9 +421,11 @@ quick_RNAseqEr <- function(seur_obj,
 
   int_genes <- c(clu_mark$gene, clu_mark_pw$gene)
   int_genes <- unique(int_genes)
+  }
 
 
   #plot heatmap with interesting genes
+  if(do_heatmap == TRUE){
   hm_dir <- paste(save_dir,
                   "outs",
                   "plots",
@@ -381,7 +446,22 @@ quick_RNAseqEr <- function(seur_obj,
                 label = label_hm,
                 plot_cols = colour_palette(),
                 draw_lines = draw_lines)
+  }
 
+  if(do_go == TRUE){
+    perform_go(seur_obj,
+               gene_list,
+               min_log2FC = min_log2FC_go,
+               reverse = reverse_go,
+               translate_gene_id_from = translate_gene_id_from,
+               translate_gene_id_to = translate_gene_id_to,
+               org_use = org_use,
+               ontology = ontology,
+               pvalue_cutoff = pvalue_cutoff_go,
+               qvalue_cutoff = qvalue_cutoff_go,
+               read_able = read_able)
+
+  }
 
   return(seur_obj)
 

@@ -45,7 +45,24 @@ quick_RNAseqEr(
   col_names,
   col_pattern_hm = "RNA_snn_res",
   label_hm = TRUE,
-  draw_lines = FALSE
+  draw_lines = FALSE,
+  gene_list,
+  min_log2FC_go = 0.25,
+  reverse_go = FALSE,
+  translate_gene_id_from = "SYMBOL",
+  translate_gene_id_to = "ENTREZID",
+  org_use = "org.Hs.eg.db",
+  ontology = "BP",
+  pvalue_cutoff_go = 0.05,
+  qvalue_cutoff_go = 0.05,
+  read_able = TRUE,
+  do_seurat_proc = TRUE,
+  do_dimplots = TRUE,
+  do_silhouette = TRUE,
+  do_purity = TRUE,
+  do_dge = TRUE,
+  do_heatmap = TRUE,
+  do_go = FALSE
 )
 }
 \arguments{
@@ -166,6 +183,53 @@ Default is TRUE}
 
 \item{draw_lines}{For heatmap. TRUE/FALSE whether white lines should be drawn between columns
 corresponding to each cluster. Default is FALSE}
+
+\item{min_log2FC_go}{min log2FC considered for GO. Default is 0.25.}
+
+\item{reverse_go}{TRUE/FALSE whether ADD DESCRIPTION. Default is FALSE.}
+
+\item{translate_gene_id_from}{format in which genes are saved in Seurat object,
+default is "SYMBOL".}
+
+\item{translate_gene_id_to}{Format to which gebe symbol should be translated
+for gene ontology analysis. Default is "ENTREZID"}
+
+\item{org_use}{organism being used for gene ontology. Default is "org.Hs.eg.db"
+which is human}
+
+\item{ontology}{What kind of gene ontology should be performed. Default is "BP" for
+biological pathway but "MF" for molecular function for example is valid, too.}
+
+\item{pvalue_cutoff_go}{P-value cutoff for gene ontology. Default is 0.05.}
+
+\item{qvalue_cutoff_go}{Cutoff for gene ontology q-value. Default is 0.05.}
+
+\item{read_able}{TRUE/FALSE whether gene names should be readable in output tables
+SAVE OUTPUT TABLES AND PLOTS!}
+
+\item{do_seurat_proc}{TRUE/FALSE (default = TRUE) whether standard Seurat processing including
+normalisation, dimensional reduction and clustering at different resolutions
+should be performed.}
+
+\item{do_dimplots}{TRUE/FALSE (default = TRUE) whether DimPlots at different resolutions should
+be plotted and saved to file.}
+
+\item{do_silhouette}{TRUE/FALSE (default = TRUE) whether silhouette plots
+should be plotted and saved to file}
+
+\item{do_purity}{TRUE/FALSE (default = TRUE) whether cluster purity plots
+should be plotted and saved to file}
+
+\item{do_dge}{TRUE/FALSE (default = TRUE) whether differential gene
+expression should be performed. N.B. this may take a long time as
+DGE will be performed at all resolutions and also at pairwise for all possible
+cluster combinations at all resolutions}
+
+\item{do_heatmap}{TRUE/FALSE (default = TRUE) whether heatmaps
+should be plotted and saved to file}
+
+\item{do_go}{TRUE/FALSE (default = TRUE) whether gene ontology should be performed
+THINK ABOUT GENE INPUT AND GROUPING}
 }
 \value{
 saves output data in newly generated folders. Returns an
