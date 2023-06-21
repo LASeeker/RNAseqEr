@@ -292,7 +292,7 @@ quick_RNAseqEr <- function(seur_obj,
              height= height)
   }
 
-  # Calculate and plut cluster purity measures
+  # Calculate and plot cluster purity measures
   if(do_purity == TRUE){
 
   clu_pur_dir <- paste(save_dir,
@@ -317,6 +317,56 @@ quick_RNAseqEr <- function(seur_obj,
            width=7,
            height=5)
   }
+
+  #read in purity measures to see which cluster resolution is the one with the
+  #largest number of clusters and largest purity measure
+  setwd(clu_pur_dir)
+  pur_dat_dir <- paste("../../../outs",
+                       "tables",
+                       "cluster_purity_data",
+                       sep = "/")
+
+  files <- list.files(pur_dat_dir, pattern = ".csv")
+  myfiles <- lapply(paste(pur_dat_dir, files, sep = "/"), read.csv)
+
+  sum_pure_df <- data.frame()
+
+  for (j in 1:length(myfiles)) {
+    dat <- myfiles[[j]]
+    clu_count <- length(levels(as.factor(dat$cluster)))
+    clu_pur_mean <- mean(dat$purity)
+    pure_measure <- (clu_pur_mean^22)/clu_count
+    df_temp <- data.frame(clu_res <- files[j],
+                          mean_pur = clu_pur_mean,
+                          clu_count = clu_count,
+                          pure_measure =  pure_measure)
+
+
+    if(j == 1){
+      keep_df <- df_temp
+      keep_res <- files[j]
+      keep_num_clu<- clu_count
+    }else{
+      keep_df <- rbind(keep_df, df_temp)
+      if(clu_pur_mean > 0.99 & clu_count >keep_num_clu){
+        keep_res <- files[j]
+        keep_num_clu<- clu_count
+      }
+    }
+  }
+
+    keep_df$keep_res <- rep(keep_res, nrow(keep_df))
+    keep_df$keep_val <- rep(keep_val, nrow(keep_df))
+
+
+    keep_resolution <- keep_df$keep_res[1]
+    keep_resolution <- strsplit(keep_resolution, "_clu")[[1]][1]
+
+    Idents(seurat_obj) <- keep_resolution
+
+
+
+  write.csv(keep_df, paste0(pur_dat_dir, "/summary_purity_stats.csv"))
 
   # Print cluster tree
   clu_tree_dir <- paste(save_dir,

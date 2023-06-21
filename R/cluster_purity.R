@@ -54,6 +54,24 @@ clu_pure <- function(seur_obj,
     pure_data$maximum <- factor(pure_data$maximum)
     pure_data$cluster <- factor(clust_int)
 
+    setwd(save_dir)
+
+    pure_dat_dir <- paste("../../../outs",
+                          "tables",
+                          "cluster_purity_data",
+                          sep = "/")
+
+    if(dir.exists(pure_dat_dir) == FALSE){
+      dir.create(pure_dat_dir, recursive = TRUE)
+      print("New directory created for saving cluster purity data")
+    }
+
+    write.csv(pure_data, paste0(pure_dat_dir,
+                                "/",
+                                names_col[i],
+                                "_cluster.purity.csv"))
+
+
     pure_plot <- ggplot(pure_data, aes(x=cluster, y=purity, colour=maximum)) +
       ggbeeswarm::geom_quasirandom(method="smiley") +
       theme_bw(20) +
