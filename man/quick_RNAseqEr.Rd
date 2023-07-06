@@ -62,7 +62,23 @@ quick_RNAseqEr(
   do_purity = TRUE,
   do_dge = TRUE,
   do_heatmap = TRUE,
-  do_go = FALSE
+  do_go = FALSE,
+  do_ann = TRUE,
+  tissue_ref_annotation = "Brain",
+  min_pct_ann = 0.25,
+  logfc_threshold_ann = 0.8,
+  assay_use_ann = "RNA",
+  custom_ref_genes_ann = FALSE,
+  custom_gene_list,
+  customclassif = "ScType_annotation",
+  plot_reduction = plot_reduction,
+  plot_label_ann = TRUE,
+  Rplot_repel_ann = TRUE,
+  plot_width_ann = 8,
+  plot_height_ann = 8,
+  dge_present_ann = FALSE,
+  dge_ann = TRUE,
+  proportion = 3
 )
 }
 \arguments{
@@ -230,6 +246,54 @@ should be plotted and saved to file}
 
 \item{do_go}{TRUE/FALSE (default = TRUE) whether gene ontology should be performed
 THINK ABOUT GENE INPUT AND GROUPING}
+
+\item{tissue_ref_annotation}{Set which tissue is being used for scType annotation.
+Default is "Brain", but it can be set to any of the following:
+"Brain", "Immune system", "Pancreas", "Liver", "Eye", "Kidney", "Brain", "Lung",
+"Adrenal", "Heart", "Intestine", "Muscle", "Placenta", "Spleen", "Stomach",
+"Thymus"}
+
+\item{min_pct_ann}{For differential gene expression for annotation. Minimum
+percentage of cells within the cluster of interest expressing the gene.
+Default is 0.25.}
+
+\item{logfc_threshold_ann}{For differential gene expression for annotation.
+Minimal log2 fold change for differential gene expression. Default is 0.8.}
+
+\item{assay_use_ann}{Which assay should be used for annotation. Default is
+"RNA"}
+
+\item{custom_ref_genes_ann}{TRUE/FALSE whether a list of genes and celltypes is
+being provided by the user for annotation. Default is FALSE}
+
+\item{custom_gene_list}{list of genes used for annotation if custom_ref_genes_ann
+is set to TRUE.}
+
+\item{customclassif}{which name should be used for the meta data column saving the
+scType annotation information. Default is ScType_annotation"}
+
+\item{plot_label_ann}{TRUE/FALSE whether ScType/ RNAseqEr annotation labels
+should be displayed on the DimPlots. Default is TRUE.,}
+
+\item{Rplot_repel_ann}{= TRUE/FALSE whether ScType / RNAseqEr annotation labels
+should be repelled on the DimPlot. Default is TRUE.}
+
+\item{plot_width_ann}{width of DimPlot in aannotaion  output files. Default = 8.}
+
+\item{plot_height_ann}{height of DimPlot in aannotaion  output files. Default = 8.}
+
+\item{dge_present_ann}{= TRUE/FALSE if previously generated DGE results are present.
+Should be set to FALSE at each new tested ident_use for the first time, but
+can be set to TRUE thereafter to speed up process.}
+
+\item{dge_ann}{= URE/FALSE whether differential gene expression should be performed
+to improve scType annotation. Default is TRUE.}
+
+\item{proportion}{threshold proportion for annotation. Default is set to 3 which
+means that the number differentially expressed genes in a cluster must be
+larger than a third of the total number of genes that define a cell type in scTyoe to
+be cosidered that cell type. Increasing the number makes annotation less stringent,
+decreasing it makes it more stringent.}
 }
 \value{
 saves output data in newly generated folders. Returns an

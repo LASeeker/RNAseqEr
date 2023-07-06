@@ -6,28 +6,31 @@
 \usage{
 annotate_seqEr(
   seur_obj,
-  ident,
+  ident_use,
   tissue_ref = "Brain",
   test_use = "MAST",
   min_pct = 0.25,
   logfc_threshold = 0.8,
   assay_use = "RNA",
-  save_dir = get_wd(),
+  save_dir = getwd(),
   custom_ref_genes = FALSE,
-  cusom_gene_list,
+  custom_gene_list,
   customclassif = "ScType_annotation",
   plot_reduction = "umap",
   plot_label = TRUE,
   plot_repel = TRUE,
   plot_width = 8,
   plot_height = 8,
-  dge = FALSE
+  dge_present = FALSE,
+  dge = TRUE,
+  proportion = 3,
+  colours = colour_palette()
 )
 }
 \arguments{
 \item{seur_obj}{Seurat object}
 
-\item{ident}{meta data column that contains clustering resolution of interest
+\item{ident_use}{meta data column that contains clustering resolution of interest
 for broad celltype annotation}
 
 \item{tissue_ref}{Specify which tissue is being used by chosing from the following:
@@ -52,7 +55,7 @@ Default is "RNA".}
 \item{custom_ref_genes}{TRUE/FALSE whether a list of genes and celltypes is
 being provided by the user.}
 
-\item{cusom_gene_list}{if custom_ref_genes == TRUE provide custom gene list here.}
+\item{custom_gene_list}{if custom_ref_genes == TRUE provide custom gene list here.}
 
 \item{customclassif}{which name should be used for the meta data column saving the
 scType annotation information. Default is ScType_annotation"}
@@ -60,21 +63,35 @@ scType annotation information. Default is ScType_annotation"}
 \item{plot_reduction}{which dimensional reduction should be used to plot data
 with ScType labels. Default is "umap"}
 
-\item{plot_label}{TRUE/FALSE whether ScType labels should be displayed on the
-DimPlot. Default is TRUE.}
+\item{plot_label}{TRUE/FALSE whether ScType/ RNAseqEr annotation  labels should
+be displayed on DimPlots. Default is TRUE.}
 
-\item{plot_repel}{TRUE/FALSE whether ScType labels should be repelled on the
-DimPlot. Default is TRUE.}
+\item{plot_repel}{TRUE/FALSE whether ScType/ RNAseqEr annotation labels should
+be repelled on DimPlots. Default is TRUE.}
 
 \item{plot_width}{width of DimPlot in output file. Default = 8.}
 
 \item{plot_height}{height of DimPlot in output file. Default = 8.}
 
-\item{dge}{TURE/FALSE whether differential gene expression should be perfomed.
-Default is FALSE, because it may take some time.}
+\item{dge_present}{TRUE/FALSE if previously generated DGE results are present.
+Should be set to FALSE at each new tested ident_use for the first time, but
+can be set to TRUE thereafter to speed up process.}
+
+\item{dge}{TURE/FALSE whether differential gene expression should be performed.
+Default is TRUE, to allow for annotation of celltypes that were not annotated
+based on scType alone.}
+
+\item{proportion}{threshold proportion for annotation. Default is set to 3 which
+means that the number differentially expressed genes in a cluster must be
+larger than a third of the total number of genes that define a cell type in scTyoe to
+be cosidered that cell type. Increasing the number makes annotation less stringent,
+decreasing it makes it more stringent.}
+
+\item{colours}{Colours for DimPlots. Default is colour_pelette() from The RNAseqEr
+library}
 }
 \value{
-seurat object with added ScType annotation
+Seurat object with added ScType and RNAseqEr annotation
 }
 \description{
 ScType (https://www.nature.com/articles/s41467-022-28803-w) is used to identify
@@ -87,7 +104,10 @@ library(dplyr)
 library(Seurat)
 library(HGNChelper)
 library(openxlsx)
-pbmc_small <- annotate_seqEr(pbmc_small,
-    tissue_ref= "Immune system",
-    ident = "RNA_snn_res.1")
+data(cns)
+cns <- annotate_seqEr(cns, ident_use = "rough_annot")
+
+# or:
+data(cns)
+cns <- annotate_seqEr(cns, ident_use = "Fine_cluster")
 }

@@ -36,6 +36,40 @@
 #' @param clust_lab_sil TRUE/FALSE if should clisters be labeled in silhouette plot
 #' @param width_sil width of silhouette plot, default is 7
 #' @param height_sil height of output plot, default is 5
+#' @param tissue_ref_annotation Set which tissue is being used for scType annotation.
+#' Default is "Brain", but it can be set to any of the following:
+#' "Brain", "Immune system", "Pancreas", "Liver", "Eye", "Kidney", "Brain", "Lung",
+#' "Adrenal", "Heart", "Intestine", "Muscle", "Placenta", "Spleen", "Stomach",
+#' "Thymus"
+#' @param min_pct_ann For differential gene expression for annotation. Minimum
+#' percentage of cells within the cluster of interest expressing the gene.
+#' Default is 0.25.
+#' @param logfc_threshold_ann For differential gene expression for annotation.
+#' Minimal log2 fold change for differential gene expression. Default is 0.8.
+#' @param assay_use_ann Which assay should be used for annotation. Default is
+#' "RNA"
+#' @param custom_ref_genes_ann TRUE/FALSE whether a list of genes and celltypes is
+#' being provided by the user for annotation. Default is FALSE
+#' @param custom_gene_list list of genes used for annotation if custom_ref_genes_ann
+#' is set to TRUE.
+#' @param customclassif which name should be used for the meta data column saving the
+#' scType annotation information. Default is ScType_annotation"
+#' @param plot_label_ann TRUE/FALSE whether ScType/ RNAseqEr annotation labels
+#' should be displayed on the DimPlots. Default is TRUE.,
+#' @param Rplot_repel_ann = TRUE/FALSE whether ScType / RNAseqEr annotation labels
+#' should be repelled on the DimPlot. Default is TRUE.
+#' @param plot_width_ann width of DimPlot in aannotaion  output files. Default = 8.
+#' @param plot_height_ann height of DimPlot in aannotaion  output files. Default = 8.
+#' @param dge_present_ann = TRUE/FALSE if previously generated DGE results are present.
+#' Should be set to FALSE at each new tested ident_use for the first time, but
+#' can be set to TRUE thereafter to speed up process.
+#' @param dge_ann = URE/FALSE whether differential gene expression should be performed
+#' to improve scType annotation. Default is TRUE.
+#' @param proportion threshold proportion for annotation. Default is set to 3 which
+#' means that the number differentially expressed genes in a cluster must be
+#' larger than a third of the total number of genes that define a cell type in scTyoe to
+#' be cosidered that cell type. Increasing the number makes annotation less stringent,
+#' decreasing it makes it more stringent.
 #' @param int_cols which colums should be used for differential gene expression
 #' analysis. Default is all resolutions specified in res argument
 #' @param only_pos whether only positive log-fold changes should be considered,
@@ -124,7 +158,7 @@
 #' @examples
 #' library(Seurat)
 #' library(clustree)
-#' seur <- quick_RNAseqEr(pbmc_small, tsne = FALSE)
+#' cns <- quick_RNAseqEr(cns, tsne = FALSE)
 quick_RNAseqEr <- function(seur_obj,
                            n_pcs = 20,
                            res = c(0.005, 0.01, 0.04, 0.05,
@@ -198,15 +232,35 @@ quick_RNAseqEr <- function(seur_obj,
                            read_able = TRUE,
 
 
-                           #specify which steps to do
+                           #specify which steps to do sihouette plots
                            do_seurat_proc = TRUE,
                            do_dimplots = TRUE,
                            do_silhouette = TRUE,
                            do_purity = TRUE,
                            do_dge = TRUE,
                            do_heatmap = TRUE,
-                           do_go =FALSE #SET TO TRUE IF CORRECTLY IMPLEMENTED
-                           ){
+                           do_go =FALSE, #SET TO TRUE IF CORRECTLY IMPLEMENTED
+                           do_ann = TRUE,
+
+
+                           #specify parameters for annotation using scType
+                           tissue_ref_annotation = "Brain",
+                           min_pct_ann = 0.25,
+                           logfc_threshold_ann = 0.8,
+                           assay_use_ann = "RNA",
+                           custom_ref_genes_ann = FALSE,
+                           custom_gene_list,
+                           customclassif = "ScType_annotation",
+                           plot_reduction = plot_reduction,
+                           plot_label_ann = TRUE,
+                           plot_repel_ann = TRUE,
+                           plot_width_ann = 8,
+                           plot_height_ann = 8,
+                           dge_present_ann = FALSE,
+                           dge_ann = TRUE,
+                           proportion = 3){
+  save_dir_save <- save_dir
+
   # Perform standard Seurat processing
   if(do_seurat_proc == TRUE){
   seur_obj <- seurat_proc(seur_obj,
@@ -320,16 +374,16 @@ quick_RNAseqEr <- function(seur_obj,
 
   #read in purity measures to see which cluster resolution is the one with the
   #largest number of clusters and largest purity measure
-  setwd(clu_pur_dir)
-  pur_dat_dir <- paste("../../../outs",
+
+  pur_dat_dir <- paste(save_dir,
+                       "outs",
                        "tables",
                        "cluster_purity_data",
                        sep = "/")
 
-  files <- list.files(pur_dat_dir, pattern = ".csv")
+  files <- list.files(pur_dat_dir, pattern = "purity.csv")
   myfiles <- lapply(paste(pur_dat_dir, files, sep = "/"), read.csv)
 
-  sum_pure_df <- data.frame()
 
   for (j in 1:length(myfiles)) {
     dat <- myfiles[[j]]
@@ -356,165 +410,342 @@ quick_RNAseqEr <- function(seur_obj,
   }
 
     keep_df$keep_res <- rep(keep_res, nrow(keep_df))
-    keep_df$keep_val <- rep(keep_val, nrow(keep_df))
+    keep_df$keep_num_clu <- rep(keep_num_clu, nrow(keep_df))
 
 
     keep_resolution <- keep_df$keep_res[1]
     keep_resolution <- strsplit(keep_resolution, "_clu")[[1]][1]
 
-    Idents(seurat_obj) <- keep_resolution
+    Idents(seur_obj) <- keep_resolution
+    print(paste0("The chosen cluster resolution for downstream analysis is ", keep_resolution))
+
+    #keep_resolution is important for annotation and sub-setting.
+
+    write.csv(keep_df, paste0(pur_dat_dir, "/summary_purity_stats.csv"))
+
+
+  ## Annotation
+  if(do_ann == TRUE){
+  seur_obj <- annotate_seqEr(seur_obj,
+                             ident_use = keep_resolution,
+                             tissue_ref = tissue_ref_annotation,
+                             test_use = test_use,
+                             min_pct = min_pct,
+                             logfc_threshold = logfc_threshold_ann,
+                             assay_use = assay_use,
+                             save_dir = save_dir,
+                             custom_ref_genes = custom_ref_genes_ann,
+                             custom_gene_list,
+                             customclassif = customclassif,
+                             plot_reduction = use_reduction,
+                             plot_label = plot_label_ann,
+                             plot_repel = plot_repel_ann,
+                             plot_width = plot_width_ann,
+                             plot_height = plot_height_ann,
+                             dge_present = dge_present_ann,
+                             dge = dge_ann,
+                             proportion = proportion,
+                             colours = plot_cols)
+  }
+
+  print("yay")
+
+  # Now that we have a resolution for the dataset that enabled a preliminary annotatoion,
+  # let's subset for the main clusters (as in cell lineages) and look for
+  # finer clusters that make sense biologically
+  if(save_dir != save_dir_save){
+    save_dir <- save_dir_save
+  }
+
+  Idents(seur_obj) <- "RNAseqEr_annotation"
+  print(save_dir)
+  for(r in 1: length(levels(as.factor(seur_obj@meta.data[["RNAseqEr_annotation"]])))){
+    curr_level <- levels(as.factor(seur_obj@meta.data[["RNAseqEr_annotation"]]))[r]
+    seur <- subset(seur_obj, ident = curr_level)
+
+    # create saving location for subsetted datasets
+    ct_dir <- paste0(save_dir, "/outs/", curr_level)
+    dir.create(ct_dir)
+    data_dir <- paste0(ct_dir, "/data")
+
+    #repeat Seurat standard processing
+
+
+    #######
+    #######
+    ####### TO DO add different thresholds to subsetted datasets
+    # Perform standard Seurat processing
+    seur <- seurat_proc(seur,
+                        n_pcs = n_pcs,
+                        res = res,
+                        select_genes = select_genes,
+                        elbow_dims = elbow_dims,
+                        tsne = tsne)
+    ####
+    ####
+    ######
+    # plot dimensionally reduced data at different clustering resolutions and
+    # save to file
+    if(do_dimplots == TRUE){
+      plot_dir_resol <- paste(ct_dir,
+                              "outs",
+                              "plots",
+                              "resolution_plots",
+                              sep = "/")
+
+      if(dir.exists(plot_dir_resol) == FALSE){
+        dir.create(plot_dir_resol, recursive = TRUE)
+        print("New directory created for saving plots in general and DimPlots at different
+          resolutions in particular")
+      }
 
 
 
-  write.csv(keep_df, paste0(pur_dat_dir, "/summary_purity_stats.csv"))
+      plot_list(seur_obj = seur,
+                col_pattern = col_pattern,
+                plot_cols = plot_cols ,
+                clust_lab = clust_lab,
+                label_size = label_size,
+                save_dir = plot_dir_resol,
+                width=width,
+                height=height,
+                use_reduction = use_reduction)
+    }
 
-  # Print cluster tree
-  clu_tree_dir <- paste(save_dir,
+    # save cluster some indication of cluster stability
+    if(do_silhouette == TRUE) {
+      sil_plot_dir <- paste(ct_dir,
+                            "outs",
+                            "plots",
+                            "silhouette_plot",
+                            sep = "/")
+
+      if(dir.exists(sil_plot_dir) == FALSE){
+        dir.create(sil_plot_dir, recursive = TRUE)
+        print("New directory created for saving silhouette plots")
+      }
+
+
+      sil_plot(seur,
+               reduction = reduction_sil,
+               col_pattern = col_pattern,
+               plot_cols = plot_cols,
+               clust_lab = TRUE,
+               save_to_file = TRUE,
+               save_dir = sil_plot_dir,
+               width = width_sil,
+               height = height_sil)
+
+      # approximate silhouette
+      appr_sil_dir <- paste(ct_dir,
+                            "outs",
+                            "plots",
+                            "approx_silhouette",
+                            sep = "/")
+
+      if(dir.exists(appr_sil_dir) == FALSE){
+        dir.create(appr_sil_dir, recursive = TRUE)
+        print("New directory created for saving approximate silhouette plots")
+      }
+
+
+      approx_sil(seur,
+                 reduction = reduction_sil,
+                 col_pattern = col_pattern,
+                 plot_cols = plot_cols,
+                 clust_lab = clust_lab_sil,
+                 label_size = label_size,
+                 save_dir = appr_sil_dir,
+                 height= height)
+    }
+
+    # Calculate and plot cluster purity measures
+    if(do_purity == TRUE){
+
+      clu_pur_dir <- paste(ct_dir,
+                           "outs",
+                           "plots",
+                           "clu_pur_dir",
+                           sep = "/")
+
+      if(dir.exists(clu_pur_dir) == FALSE){
+        dir.create(clu_pur_dir, recursive = TRUE)
+        print("New directory created for saving cluster purity plots")
+      }
+
+
+      clu_pure(seur,
+               reduction = reduction_sil,
+               col_pattern = col_pattern,
+               plot_cols = plot_cols,
+               clust_lab = clust_lab_sil,
+               label_size = label_size,
+               save_dir = clu_pur_dir,
+               width=7,
+               height=5)
+    }
+
+    # here cluster purity measures are not helpful. The cluster resolution will be
+    # determines as such resolution that produces the maximum number of clusters
+    # that are still characterised by the expression of marker genes that can be
+    # validated using other lab methods.
+
+    #perform differential gene expression analysis at different resolutions and
+    # save results to file
+    if(do_dge == TRUE){
+      dge_dir <- paste(ct_dir,
                        "outs",
-                       "plots",
-                       "clu_tree_dir",
+                       "tables",
+                       "DGE",
+                       "different_resol",
                        sep = "/")
 
-  if(dir.exists(clu_tree_dir) == FALSE){
-    dir.create(clu_tree_dir, recursive = TRUE)
-    print("New directory created for saving a cluster tree plot")
-  }
-
-  cluster_tree <- clustree(seur_obj,
-                           prefix = col_pattern,
-                           exprs = c("data", "counts", "scale.data"),
-                           assay = NULL
-                           )
-
-  pdf(paste0(clu_tree_dir, "/cluster_tree.pdf"),
-      paper="a4", width=8, height=11.5)
-
-  print(cluster_tree)
-
-  dev.off()
-
-
-
-  #perform differential gene expression analysis at different resolutions and
-  # save results to file
-  if(do_dge == TRUE){
-  dge_dir <- paste(save_dir,
-                   "outs",
-                   "tables",
-                   "DGE",
-                   "different_resol",
-                   sep = "/")
-
-  if(dir.exists(dge_dir) == FALSE){
-    dir.create(dge_dir, recursive = TRUE)
-    print("new directory created for saving output tables in general and results
+      if(dir.exists(dge_dir) == FALSE){
+        dir.create(dge_dir, recursive = TRUE)
+        print("new directory created for saving output tables in general and results
           of differential gene expression analyses in particular")
-  }
+      }
 
 
-  all_res_mark <- int_res_all_mark(seur_obj = seur_obj,
-                                   int_cols = int_cols,
-                                   only_pos = only_pos,
-                                   min_pct = min_pct,
-                                   logfc_threshold = logfc_threshold,
-                                   fil_pct_1 = fil_pct_1,
-                                   fil_pct_2 = fil_pct_2,
-                                   save_dir = dge_dir,
-                                   test_use = test_use)
+      all_res_mark <- int_res_all_mark(seur_obj = seur,
+                                       int_cols = int_cols,
+                                       only_pos = only_pos,
+                                       min_pct = min_pct,
+                                       logfc_threshold = logfc_threshold,
+                                       fil_pct_1 = fil_pct_1,
+                                       fil_pct_2 = fil_pct_2,
+                                       save_dir = dge_dir,
+                                       test_use = test_use)
 
-  # perform pairwise dge at chosen favourite resolution
+      # perform pairwise dge at chosen favourite resolution
 
-  dge_pw_dir <- paste(save_dir,
-                   "outs",
-                   "tables",
-                   "DGE",
-                   "pairwise",
-                   sep = "/")
-  if(dir.exists(dge_pw_dir) == FALSE){
-    dir.create(dge_pw_dir, recursive = TRUE)
-    print("new directory created for saving results
+      dge_pw_dir <- paste(ct_dir,
+                          "outs",
+                          "tables",
+                          "DGE",
+                          "pairwise",
+                          sep = "/")
+      if(dir.exists(dge_pw_dir) == FALSE){
+        dir.create(dge_pw_dir, recursive = TRUE)
+        print("new directory created for saving results
           of pariwise differential gene expression analyses in particular")
+      }
+
+      pw_mark <- pairwise_dge(seur_obj = seur,
+                              int_cols = int_cols_pw,
+                              only_pos = only_pos,
+                              min_pct = min_pct_pw,
+                              logfc_threshold = logfc_threshold_pw,
+                              fil_pct_1 = fil_pct_1_pw,
+                              fil_pct_2 = fil_pct_2_pw,
+                              save_dir = dge_pw_dir,
+                              test_use = "MAST",
+                              assay_use = "RNA")
+
+
+      # use DGE results to plot heatmap and decide on clustering resolution
+
+
+      clu_mark <- gen_mark_list(file_dir = dge_dir,
+                                ad_pval = ad_pval,
+                                avg_log = avg_log,
+                                pct_1 = pct_1,
+                                pct_2 = pct_2,
+                                pairwise = FALSE,
+                                n_top = n_top)
+
+      clu_mark_pw <- gen_mark_list(file_dir = dge_pw_dir,
+                                   ad_pval = ad_pval,
+                                   avg_log = avg_log,
+                                   pct_1 = pct_1,
+                                   pct_2 = pct_2,
+                                   pairwise = TRUE,
+                                   n_top = n_top)
+
+      # concatenate genes of clu_mark and clu_mark_pw to list of interesting genes
+
+      int_genes <- c(clu_mark$gene, clu_mark_pw$gene)
+      int_genes <- unique(int_genes)
+    }
+
+
+    #plot heatmap with interesting genes
+    if(do_heatmap == TRUE){
+      hm_dir <- paste(ct_dir,
+                      "outs",
+                      "plots",
+                      "heatmaps",
+                      sep = "/")
+
+      if(dir.exists(hm_dir) == FALSE){
+        dir.create(hm_dir, recursive = TRUE)
+        print("New directory created for saving heatmaps")
+      }
+
+      heatmap_seqEr(seur,
+                    use_resol = use_resol,
+                    col_names,
+                    col_pattern = col_pattern_hm,
+                    int_genes,
+                    save_dir = hm_dir,
+                    label = label_hm,
+                    plot_cols = colour_palette(),
+                    draw_lines = draw_lines)
+    }
+
+
+    ## Annotation
+    if(do_ann == TRUE){
+      seur_obj <- annotate_seqEr(seur_obj,
+                                 ident_use = keep_resolution, # IMPORTANT ! CHANGE AFTER SUITABLE RESOLUTION HAS BEEN FOUND
+                                 tissue_ref = tissue_ref_annotation,
+                                 test_use = test_use,
+                                 min_pct = min_pct,
+                                 logfc_threshold = logfc_threshold_ann,
+                                 assay_use = assay_use,
+                                 save_dir = ct_dir,
+                                 custom_ref_genes = custom_ref_genes_ann,
+                                 custom_gene_list,
+                                 customclassif = customclassif,
+                                 plot_reduction = use_reduction,
+                                 plot_label = plot_label_ann,
+                                 plot_repel = plot_repel_ann,
+                                 plot_width = plot_width_ann,
+                                 plot_height = plot_height_ann,
+                                 dge_present = dge_present_ann,
+                                 dge = dge_ann,
+                                 proportion = proportion,
+                                 colours = plot_cols)
+
+      # here use new annotation maybe repeat some analysis with new labels
+      # GO
+      # DGE with conditions
+      # DGE with correct cluster labels while givin the option to remove unused
+      # output
+
+      #
+      #
+
+    }
+
+    print("yay")
+
+
+
+    #####
+    #####
+    #####
+
+    saveRDS(seur, paste0(data_dir, "/", curr_level, ".RDS"))
+
+
   }
 
-  pw_mark <- pairwise_dge(seur_obj = seur_obj,
-                           int_cols = int_cols_pw,
-                           only_pos = only_pos,
-                           min_pct = min_pct_pw,
-                           logfc_threshold = logfc_threshold_pw,
-                           fil_pct_1 = fil_pct_1_pw,
-                           fil_pct_2 = fil_pct_2_pw,
-                           save_dir = dge_pw_dir,
-                           test_use = "MAST",
-                           assay_use = "RNA")
-
-
-  # use DGE results to plot heatmap and decide on clustering resolution
-
-
-  clu_mark <- gen_mark_list(file_dir = dge_dir,
-                            ad_pval = ad_pval,
-                            avg_log = avg_log,
-                            pct_1 = pct_1,
-                            pct_2 = pct_2,
-                            pairwise = FALSE,
-                            n_top = n_top)
-
-  clu_mark_pw <- gen_mark_list(file_dir = dge_pw_dir,
-                            ad_pval = ad_pval,
-                            avg_log = avg_log,
-                            pct_1 = pct_1,
-                            pct_2 = pct_2,
-                            pairwise = TRUE,
-                            n_top = n_top)
-
-  # concatenate genes of clu_mark and clu_mark_pw to list of interesting genes
-
-  int_genes <- c(clu_mark$gene, clu_mark_pw$gene)
-  int_genes <- unique(int_genes)
-  }
-
-
-  #plot heatmap with interesting genes
-  if(do_heatmap == TRUE){
-  hm_dir <- paste(save_dir,
-                  "outs",
-                  "plots",
-                  "heatmaps",
-                  sep = "/")
-
-  if(dir.exists(hm_dir) == FALSE){
-    dir.create(hm_dir, recursive = TRUE)
-    print("New directory created for saving heatmaps")
-  }
-
-  heatmap_seqEr(seur_obj,
-                use_resol = use_resol,
-                col_names,
-                col_pattern = col_pattern_hm,
-                int_genes,
-                save_dir = hm_dir,
-                label = label_hm,
-                plot_cols = colour_palette(),
-                draw_lines = draw_lines)
-  }
-
-  if(do_go == TRUE){
-    perform_go(seur_obj,
-               gene_list,
-               min_log2FC = min_log2FC_go,
-               reverse = reverse_go,
-               translate_gene_id_from = translate_gene_id_from,
-               translate_gene_id_to = translate_gene_id_to,
-               org_use = org_use,
-               ontology = ontology,
-               pvalue_cutoff = pvalue_cutoff_go,
-               qvalue_cutoff = qvalue_cutoff_go,
-               read_able = read_able)
-
-  }
+  # Add fine annotation to large ds and repeat some analysis that will be the
+  # final output and saved
 
   return(seur_obj)
 
+  }
 
 
-}
