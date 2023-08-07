@@ -1,7 +1,7 @@
-#' Title
-#' @description function performs DGE between all possible cluster combinations
-#' at one or more given resolutions and saves a raw and filtered output
-#' file for each comparison.
+#' pairwise_dge()
+#' @description function performs differential gene expression analysis pairwise
+#' between all possible cluster combinations at one or more given resolutions
+#' and saves a raw and filtered output file for each comparison.
 #' @param seur_obj quality controlled and clustered Seurat object
 #' @param int_cols vector of column names that store cluster information
 #' and will be used for all pairwise comparisons for clusters. This can be run
@@ -45,16 +45,18 @@ pairwise_dge <- function(seur_obj,
                          test_use = "MAST",
                          assay_use = "RNA") {
   for (k in 1:length(int_cols)) {
-    Idents(seur_obj) <- int_cols[k]
+    curr_res <- int_cols[k]
+    Idents(seur_obj) <- curr_res
     # create all pairwise combinations at the picked resolution
-    clust_id_list <- combn(levels(as.factor(seur_obj@meta.data[[int_cols]])), 2)
+    clust_id_list <- combn(levels(as.factor(seur_obj@meta.data[[curr_res]])), 2)
     for (i in 1:ncol(clust_id_list)) {
       clust_mark <- FindMarkers(seur_obj,
         ident.1 = clust_id_list[, i][[1]],
         ident.2 = clust_id_list[, i][[2]],
         min.pct = min_pct,
         test.use = test_use,
-        assay = assay_use
+        assay = assay_use,
+        verbose = FALSE
       )
       clust_mark$cluster <- clust_id_list[, i][[1]]
       clust_mark$comp_to_clust <- clust_id_list[, i][[2]]

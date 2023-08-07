@@ -1,0 +1,441 @@
+---
+title: "RNAseqEr"
+output: rmarkdown::html_vignette
+author: "Luise A. Seeker"
+date: "25 July 2023"
+vignette: >
+  %\VignetteIndexEntry{RNAseqEr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Fast and reproducible single cell/ nucleus RNAseq analysis
+
+This package was written to allow for a fast and reproducible processing of 
+single cell or single nucleus RNA sequencing (sc/snRNAseq) data in R by 
+summarizing common workflows into fewer functions and by providing solutions
+for bottle-neck steps that often slow down progress such as the cell type annotation
+and the decision on a suitable clustering resolution that is biologically meaningful.
+
+The workflow starts with a pre-processed dataset where the following is considered
+* genes that are not expressed may be removed from the dataset (gene QC)
+* low quality cells are removed from the dataset
+* ambient RNA may be removed
+* doublets may be removed or flagged
+* dataset may be batch corrected and/ or integrated if required.
+
+The workflow consists of
+1) Performing standard Seurat processing including
+* Normalisation
+* finding of variable genes
+* linear and non-linear dimensional reductions
+* CLustering at different resolutions
+
+2) Finding a stable cluster resolution for automatic celltype annotation using an 
+adapted ScType algorithm
+
+3) Subsetting the datasets for cell lineages
+
+4) Finding a suitable clustering resolution for cell lineage datasets (bottleneck)
+
+5) cluster quality control
+
+6) Identification of best cluster marker genes for validation
+
+7) differential abundance with variables of interest
+
+8) differential gene expression with variables of interest and identification of
+  condition markers
+
+9) gene ontology based on cluster and condition markers
+
+
+The processed Seurat objects are saved together with a report on the analysis that
+helps understanding what has been done and where results are saved. 
+Additional analyses can be added using the processed Seurat objects. 
+
+All results should be thoroughly checked and manually corrected if necessary.
+
+
+
+```{r setup}
+library(RNAseqEr)
+library(here)
+library(Seurat)
+library(miloR)
+library(SingleCellExperiment)
+library(MAST)
+library(dplyr)
+```
+
+The package comes with a dataset from the human CNS (Seeker et al. 2023) that 
+includes different cell types from different CNS regions and different donor 
+age and sex groups. This data can be loaded with 
+
+```{r}
+cns
+```
+
+## Standard Seurat processing
+
+It can be seen that the cns data above already contains normalized and scaled data as well
+as different dimensional reductions. Your data will not have any of those at this
+point of the analysis. [Seurat](https://satijalab.org/seurat/articles/pbmc3k_tutorial.html) 
+is a fantastic and very user-friendly tool for 
+adding those information to your data and I highly recommend reading through their 
+papers and vignettes. However, if you analyse many datasets, you 
+will also see that your work is going to be very repetitive, using the same Seurat 
+functions again and again without tweaking them necessarily a lot. So here we 
+present a function that automatically runs Seurat's standard normalisation, 
+selection of variable genes, dimensional reduction and clustering at different 
+resolutions. 
+
+```{r, echo=FALSE, results='hide', fig.keep='all', fig.width= 8, fig.height=5}
+cns <- seurat_proc(cns)
+
+```
+
+The function plots an elbow plot so that you can check if the standard of 20 principle
+components is suitable for your data. If you think you need to use less or more 
+(20 is far away from the elbow in the plot), you can re-run the function while
+providing an additional argument:
+
+```{r, eval= FALSE}
+cns <- seurat_proc(cns, n_pcs = 25)
+
+```
+
+
+## Plotting of different clustering resolutions
+
+In the previous step you created different clustering resolutions, but which
+is the most appropriate one for your data? This is often a tricky question to 
+answer and the literature on this is vast. 
+
+A first good step is to visualise different clustering resolutions. 
+You can easily do this with the function below which will also save dimensional 
+reduction plots (default is umap, tsne can be used with use_reduction = "umap") 
+to a folder. Remember to set your save_directory that you'd like to use, the 
+default is the current working directory. 
+
+
+```{r,  echo=FALSE,results='hide', fig.keep='all'}
+
+plot_list(cns, save_dir = "../")
+
+```
+
+
+## Calculate cluster purity at different resolutions
+
+The intention above was to create clustering from a too low to a too high resolution. 
+But which one is appropriate? This depends in this work for on if you have a 
+very homogeneous cell population or a mix of different cell types (which is the
+case here), where we would like to do first a rough annotation.
+
+If the second is true, we will use cluster purity measures to first separate the
+dataset best for clusters that are physically distinct on in the umap/tsne space 
+and thus most likely represent different cell types.
+
+```{r,  echo = FALSE, results = 'hide', fig.keep = 'all'}
+clu_pure(cns, save_dir = "../")
+
+```
+
+```{r, RNAseqErh = 8, fig.height = 5}
+keep_res <- max_pure(save_path = here("outs", "all_celltypes","tables", "cluster_purity_data"))
+
+DimPlot(cns, group.by = keep_res, cols = colour_palette())
+
+```
+
+## Cell type annotation
+
+Above we found a cluster resolution that separates what could be celltypes, however, 
+we don't know which cell types are present. We are therefore using an annotation
+based on [ScType](https://www.nature.com/articles/s41467-022-28803-w). We are looking 
+for a rough annotation, that can be used for subsetting the dataset into lineages 
+for subsequent further clustering. 
+SCType sometimes returns "Unknown" and we therefore adapted it for those cases 
+to not only consider gene expression but also differential gene expression. 
+Running a differential gene expression analysis at this step is time consuming 
+but also valuable as it will help to double check the automatic annotation. 
+The differential gene expression results are saved to file and can be used
+for plotting heatmaps for example that show cell type segregation. 
+
+N.B. The SCType and RNAseqER annotation will look identical as long as there are
+no "Unknown" in the former. 
+
+TO DO ADD OVERALL DOTPLOT!
+
+
+
+```{r, fig.width = 8, fig.height = 5, echo = FALSE, results = 'hide', fig.keep = 'all',}
+here("..")
+cns <- annotate_seqEr(cns, ident_use = keep_res)
+
+```
+
+The annotation above looks very close to the manual annotation we used in 
+Seeker et al. 2023:
+
+```{r, fig.width = 8, fig.height = 5}
+DimPlot(cns, group.by = "rough_annot", cols = colour_palette(), label = TRUE)
+
+```
+
+
+## Finer annotation
+
+We may or may not be interested in all celltypes that a dataset contains. In many
+cases is is beneficial to subset the dataset into cell lineage datasets that then
+can be used for finer clustering and downstream analyses. 
+The following function subsets the dataset for all clusters that
+have been identifies and annotated above using the RNAseqEr annotation. Any 
+metadata column can be used for subsetting. Each cell lineage will be saved in 
+a separate .RDS file.
+
+
+```{r}
+here("..")
+subset_RNAseqEr(cns, save_dir = here())
+
+list.files(here("outs", "data"))
+
+
+```
+
+## Finer clustering
+
+Finding an appropriate clustering resulution within a cell lineage is often a 
+step that takes a long time and is associated with insecurity, particularly when 
+the data scientist is yet inexperienced. From a biological point of view 
+we seek to find a resolution with the maximum number of clusters that still allows
+the identification of cluster markers that can be used for validation using other 
+lab techniques such as immuno-fluorescence or RNAscope. 
+We show here our approach using the example of ologodendrocytes. 
+We also provide a function using the same approach for all the subsetted datasets
+automatically. 
+
+```{r, fig.width = 10, fig.height = 5, echo = FALSE, results = 'hide', fig.keep = 'all'}
+
+seur <- readRDS(here("outs", "data", "Oligodendrocytes.RDS"))
+seur <- seurat_proc(seur, tsne = FALSE)
+
+```
+
+
+```{r, fig.show ='hold', out.width ='50%', echo = FALSE,results ='hide', fig.keep ='all'}
+plot_list(seur, save_dir = "../", dir_lab = "Oligodendrocytes")
+
+```
+
+
+In the above plots it can be seen that some resolutions do not seem to make sense
+as they either don't cluster at all (< 0.1), have the same clusters as another
+resolution (for example 0.6 and 0.7) or simply seem to overcluster, where cluster
+separations are visually not detectable and cluster labels overlap completely (>1).
+
+All other cluster resolutions may make sense, so how to pick a suitable one? Our
+approach is to decide in by looking at the results of differential gene expression 
+analyses to see whether or not we can identify markers for most clusters. Why
+most and not all? We noticed that in many datasets, one cluster seems to be the 
+"average" that does express al the cell lineage markers but nothing special over 
+and above. It may be reasonable to keep a clustering resolution where a cluster
+is negative for markers that characterise other clusters.
+
+So all potentially interesting resolutions can be used below:
+
+```{r}
+
+# Pick interesting resolutions
+int_resol <- c(0.2, 0.3, 0.6, 0.8, 0.9)
+int_res <- paste0("RNA_snn_res.", int_resol)
+
+#create an output folder
+dge_dir <- here("outs", "Oligodendrocytes", "tables", "DGE", "DGE_diff_resol")
+
+```
+
+
+```{r, eval = FALSE}
+if(dir.exists(dge_dir) == FALSE){
+  dir.create(dge_dir, recursive = TRUE)
+}
+            
+all_res_mark <- int_res_all_mark(seur_obj = seur,
+                                 int_cols = int_res,
+                                 save_dir = dge_dir)
+
+```
+
+
+```{r}
+# see the output 
+list.files(dge_dir)
+```
+
+The function above generates two outputs for each resolution, one set for unfiltered ("all")
+and one for further filtered ("fil") values that can be tweaked in the function arguments.
+
+We also add a pairwise comparison of clusters:
+
+```{r}
+dge_pw_dir <- here("outs", "Oligodendrocytes", "tables", "DGE", "DGE_pairwise")
+
+```
+
+
+```{r, eval = FALSE}
+
+dir.create(dge_pw_dir)
+
+pw_mark <- pairwise_dge(seur_obj = seur,
+                        int_cols = int_res,
+                        save_dir = dge_pw_dir)
+head(pw_mark)
+```
+
+
+Above we generates a whole lot of output that nobody wants to comb through 
+manually. So below we are going to read in all the results and summarise them
+in a meaningful way. 
+
+The two functions below look into the results of the overall (fist) and pairwise
+(second) differential gene expression analysis results and keeps the top n 
+markers (default n = 10) per cluster. 
+
+Those genes are then concatenated and duplicates are filtered out, leaving the
+user with a condensed list of the most interesting potential cluster markers which
+are used to determine the similarity/ difference of clusters to find an appropriate
+clustering resolution.
+
+```{r}
+clu_mark <- gen_mark_list(file_dir = dge_dir)
+
+clu_mark_pw <- gen_mark_list(file_dir = dge_pw_dir,
+                             pairwise = TRUE)
+
+int_genes <- c(clu_mark$gene, clu_mark_pw$gene)
+int_genes <- unique(int_genes)
+```
+
+
+## Identifying clusters that are too similar to find most appropriate resolution
+
+Below we use heatmaps to visually screen differences and similarities between
+clusters. The function also uses average expression values to compare each 
+cluster pair at different reolutions paorwise. If they are too similar based on
+their maximum difference, mean difference or Eucledian distance, it's recommended
+to merge clusters. Each of those incidences adds 1 to a cluster similarity score. 
+If a resolution has a high overall cluster similarity score it means that resolution
+includes a lot of clusters that are very similar. The cluster resolution with the 
+lowest cluster similarity score is the one the user should consider. 
+
+```{r,  fig.height = 8, fig.width = 8, echo = FALSE, results = 'hide', fig.keep = 'all'}
+
+hm_dir <- here("outs",
+               "Oligodendrocytes",
+               "plots",
+               "heatmaps")
+
+
+dir.create(hm_dir, recursive = TRUE)
+        
+
+df_seqEr <- heatmap_seqEr(seur,
+              use_resol = FALSE,
+              col_names = int_res,
+              int_genes = int_genes,
+              save_dir = hm_dir,
+              max_diff_threshold = 10,
+              mean_diff_thres = 0.1)
+```
+
+To look at the cluster similarity scores, inspect the dataframe below. It shows that
+in this case the resolution 0.3 may be the most appropriate. More generally we use the 
+hoghest resolution with the lowest cluster similarity score (tail(x,1)).
+
+```{r}
+df_seqEr
+```
+
+
+```{r}
+res_df <- subset(df_seqEr, df_seqEr$cluster_sim_score == min(df_seqEr$cluster_sim_score))
+keep_res <- tail(res_df$resolution,1)
+```
+
+
+```{r, fig.width = 8, fig.height = 5}
+Idents(seur) <- keep_res
+
+seur$cluster_id <- paste0("Oligodendrocytes_", seur@meta.data[[keep_res]])
+
+DimPlot(seur, group.by = "cluster_id", label = TRUE, cols = colour_palette())
+```
+
+## Cluster Quality control
+
+Sometimes individual samples can cluster separately from the rest which is 
+more likely to be due to technical reasons than showing a biologically interesting
+signal. This may particularly happen when working with human or other non-model
+organism data where the post-mortem conditions are more variable and there is more
+genetic variation and variation in lifestyle, disease burden and medication. 
+
+We always perform some form of cluster quality control to capture clusters that
+are made up only by a few samples or donors. If tiny cluster are as a consequence 
+removed from the dataset, we keep the rest of the dataset as it is. If a significant 
+proportion is removed, it is a safer option to then repeat the selection of variable 
+genes up to the re-clustering. 
+
+The function below can be used on any meta data column to test for cluster
+biased clustering. 
+
+```{r, fig.width = 8, fig.height = 5}
+seur <- cluster_qc(seur_obj = seur,
+                   cluster_col = "cluster_id",
+                   vars = c("process_number", "caseNO", "Tissue"),
+                   dir_lab = "Oligodendrocytes")
+
+
+```
+
+
+# Differential abundance testing
+
+Often it is of interest to see if the number of cell/ nuclei per cluster vary 
+depending on the condition for example. 
+Different methods have been implemented to test this question in a way that is 
+statistically sound which is less trivial then it may appear at first. 
+In our hands Milo (Ref) works well and we implemnted it here. We encourage the
+user to try and test other methods as well. 
+
+```{r}
+milo_obj <- abundance_test(seur_obj = seur,
+                           cluster_col = "cluster_id",
+                           sample_id = "uniq_id",
+                           cols_interest = c("uniq_id",
+                                             "Tissue",
+                                             "gender",
+                                             "AgeGroup",
+                                             "caseNO"),
+                           test_factors = c("Tissue", "gender", "AgeGroup"))
+
+```
+
+
+
+# Session Info
+
+```{r}
+sessionInfo()
+
+```

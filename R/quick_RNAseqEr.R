@@ -375,54 +375,12 @@ quick_RNAseqEr <- function(seur_obj,
   #read in purity measures to see which cluster resolution is the one with the
   #largest number of clusters and largest purity measure
 
-  pur_dat_dir <- paste(save_dir,
-                       "outs",
-                       "tables",
-                       "cluster_purity_data",
-                       sep = "/")
-
-  files <- list.files(pur_dat_dir, pattern = "purity.csv")
-  myfiles <- lapply(paste(pur_dat_dir, files, sep = "/"), read.csv)
 
 
-  for (j in 1:length(myfiles)) {
-    dat <- myfiles[[j]]
-    clu_count <- length(levels(as.factor(dat$cluster)))
-    clu_pur_mean <- mean(dat$purity)
-    pure_measure <- (clu_pur_mean^22)/clu_count
-    df_temp <- data.frame(clu_res <- files[j],
-                          mean_pur = clu_pur_mean,
-                          clu_count = clu_count,
-                          pure_measure =  pure_measure)
+  keep_res <- max_pure(save_dir = save_dir,
+           read_path = "/outs/all_celltypes/tables/cluster_purity_data")
 
-
-    if(j == 1){
-      keep_df <- df_temp
-      keep_res <- files[j]
-      keep_num_clu<- clu_count
-    }else{
-      keep_df <- rbind(keep_df, df_temp)
-      if(clu_pur_mean > 0.99 & clu_count >keep_num_clu){
-        keep_res <- files[j]
-        keep_num_clu<- clu_count
-      }
-    }
-  }
-
-    keep_df$keep_res <- rep(keep_res, nrow(keep_df))
-    keep_df$keep_num_clu <- rep(keep_num_clu, nrow(keep_df))
-
-
-    keep_resolution <- keep_df$keep_res[1]
-    keep_resolution <- strsplit(keep_resolution, "_clu")[[1]][1]
-
-    Idents(seur_obj) <- keep_resolution
-    print(paste0("The chosen cluster resolution for downstream analysis is ", keep_resolution))
-
-    #keep_resolution is important for annotation and sub-setting.
-
-    write.csv(keep_df, paste0(pur_dat_dir, "/summary_purity_stats.csv"))
-
+  Idents(seur_obj) <- keep_res
 
   ## Annotation
   if(do_ann == TRUE){
@@ -465,8 +423,10 @@ quick_RNAseqEr <- function(seur_obj,
 
     # create saving location for subsetted datasets
     ct_dir <- paste0(save_dir, "/outs/", curr_level)
+    ct_dir_save <- ct_dir
     dir.create(ct_dir)
     data_dir <- paste0(ct_dir, "/data")
+    dir.create(data_dir)
 
     #repeat Seurat standard processing
 
@@ -583,6 +543,10 @@ quick_RNAseqEr <- function(seur_obj,
                save_dir = clu_pur_dir,
                width=7,
                height=5)
+    }
+
+    if(ct_dir != ct_dir_save){
+      ct_dir <- ct_dir_save
     }
 
     # here cluster purity measures are not helpful. The cluster resolution will be
@@ -706,7 +670,7 @@ quick_RNAseqEr <- function(seur_obj,
                                  save_dir = ct_dir,
                                  custom_ref_genes = custom_ref_genes_ann,
                                  custom_gene_list,
-                                 customclassif = customclassif,
+                                 customclassif = paste0(customclassif, "_", curr_level),
                                  plot_reduction = use_reduction,
                                  plot_label = plot_label_ann,
                                  plot_repel = plot_repel_ann,

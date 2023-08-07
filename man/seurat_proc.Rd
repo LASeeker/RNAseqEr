@@ -43,6 +43,6 @@ and clustering at multiple resolutions.
 }
 \examples{
 library(Seurat)
-pbmc_small_test <- seurat_proc(pbmc_small, tsne = FALSE)
+cns <- seurat_proc(cns)
 
 }

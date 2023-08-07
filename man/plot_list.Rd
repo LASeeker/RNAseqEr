@@ -11,6 +11,7 @@ plot_list(
   clust_lab = TRUE,
   label_size = 8,
   save_dir = getwd(),
+  dir_lab = "all_celltypes",
   width = 7,
   height = 5,
   use_reduction = "umap"
@@ -51,6 +52,6 @@ resolutions and saves plot as outputs
 library(Seurat)
 library(RColorBrewer)
 library(ggsci)
-pbmc_small_test <- seurat_proc(pbmc_small, tsne = FALSE)
-plot_list(pbmc_small_test)
+cns <- seurat_proc(cns, tsne = FALSE)
+plot_list(cns)
 }

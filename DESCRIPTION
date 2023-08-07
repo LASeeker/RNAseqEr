@@ -28,8 +28,11 @@ Imports:
     ggbeeswarm,
     clustree,
     openxlsx,
-    HGNChelper
+    HGNChelper,
+    miloR
 Suggests: 
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 License: MIT + file LICENSE
@@ -37,3 +40,4 @@ URL: https://github.com/LASeeker/RNAseqEr
 BugReports: https://github.com/LASeeker/RNAseqEr/issues
 Depends: 
     R (>= 2.10)
+VignetteBuilder: knitr

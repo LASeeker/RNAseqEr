@@ -47,7 +47,8 @@ int_res_all_mark <- function(seur_obj,
         only.pos = only_pos,
         min.pct = min_pct,
         logfc.threshold = logfc_threshold,
-        test.use = test_use
+        test.use = test_use,
+        verbose = FALSE
       )
       fil_mark <- subset(
         all_mark,

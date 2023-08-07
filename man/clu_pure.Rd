@@ -13,6 +13,7 @@ clu_pure(
   clust_lab = TRUE,
   label_size = 8,
   save_dir = getwd(),
+  dir_lab = "all_celltypes",
   width = 7,
   height = 5
 )
@@ -35,6 +36,8 @@ package}
 
 \item{save_dir}{where output should be saved, default is working directory}
 
+\item{dir_lab}{label used for which data is analysed. Default is "all_celltypes"}
+
 \item{width}{width of output plot, default is 7}
 
 \item{height}{height of output plot, default is 5}
@@ -54,6 +57,6 @@ library(cluster)
 library(bluster)
 library(ggplot2)
 library(ggbeeswarm)
-seur <- seurat_proc(pbmc_small,tsne = FALSE)
-clu_pure(seur)
+cns <- seurat_proc(cns,tsne = FALSE)
+clu_pure(cns)
 }

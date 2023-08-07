@@ -10,6 +10,7 @@
 #' @param save_to_file TRUE/FALSE whether silhouette plots should be saved to file
 #' in specified save_dir or only plotted in environment
 #' @param save_dir specify where output should be saved. Defaut is working directory
+#' @param dir_lab label used for which data is analysed. Default is "all_celltypes"
 #' @param width width of output plot, default is 7
 #' @param height height of output plot, default is 5
 #'
@@ -24,8 +25,8 @@
 #' library(SingleCellExperiment)
 #' library(gtools)
 #' library(cluster)
-#' seur <- seurat_proc(pbmc_small,tsne = FALSE)
-#' av_sil_df <- sil_plot(seur)
+#' cns <- seurat_proc(cns,tsne = FALSE)
+#' av_sil_df <- sil_plot(cns)
 sil_plot <- function(seur_obj,
                      reduction = "PCA",
                      col_pattern = "RNA_snn_res",
@@ -33,6 +34,7 @@ sil_plot <- function(seur_obj,
                      clust_lab = TRUE,
                      save_to_file = FALSE,
                      save_dir = getwd(),
+                     dir_lab = "all_celltypes",
                      width=7,
                      height=5){
   sce_obj <- as.SingleCellExperiment(seur_obj)
@@ -42,9 +44,14 @@ sil_plot <- function(seur_obj,
   names_col <- mixedsort(names_col)
   met_dat <- as.data.frame(colData(sce_obj))
   distance <- dist(reducedDim(sce_obj, reduction))
+  if(save_to_file == TRUE){
+    sil_dir <- paste0(save_dir, "/outs/", dir_lab, "/plots/")
+  }
+
 
   for(i in 1: length(names_col)){
     clust <- met_dat[[names_col[i]]]
+
     if(length(levels(clust)) > 1){
             clust_int <- as.integer(paste0(clust))
             sil <- silhouette(clust_int, dist = distance)
@@ -52,7 +59,7 @@ sil_plot <- function(seur_obj,
             sil_cols <- sil_cols[order(-sil[,1], sil[,3])]
 
             if(save_to_file == TRUE){
-            pdf(paste0(save_dir, "/",
+            pdf(paste0(sil_dir,
                        names_col[i], "_sil.pdf"), width=width, height=height)
             plot(sil, border = NA)
             plot(sil,

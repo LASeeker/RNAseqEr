@@ -73,7 +73,7 @@ quick_RNAseqEr(
   customclassif = "ScType_annotation",
   plot_reduction = plot_reduction,
   plot_label_ann = TRUE,
-  Rplot_repel_ann = TRUE,
+  plot_repel_ann = TRUE,
   plot_width_ann = 8,
   plot_height_ann = 8,
   dge_present_ann = FALSE,
@@ -275,9 +275,6 @@ scType annotation information. Default is ScType_annotation"}
 \item{plot_label_ann}{TRUE/FALSE whether ScType/ RNAseqEr annotation labels
 should be displayed on the DimPlots. Default is TRUE.,}
 
-\item{Rplot_repel_ann}{= TRUE/FALSE whether ScType / RNAseqEr annotation labels
-should be repelled on the DimPlot. Default is TRUE.}
-
 \item{plot_width_ann}{width of DimPlot in aannotaion  output files. Default = 8.}
 
 \item{plot_height_ann}{height of DimPlot in aannotaion  output files. Default = 8.}
@@ -294,6 +291,9 @@ means that the number differentially expressed genes in a cluster must be
 larger than a third of the total number of genes that define a cell type in scTyoe to
 be cosidered that cell type. Increasing the number makes annotation less stringent,
 decreasing it makes it more stringent.}
+
+\item{Rplot_repel_ann}{= TRUE/FALSE whether ScType / RNAseqEr annotation labels
+should be repelled on the DimPlot. Default is TRUE.}
 }
 \value{
 saves output data in newly generated folders. Returns an
@@ -308,5 +308,5 @@ differential gene expression analysis, and gene intology analysis.
 \examples{
 library(Seurat)
 library(clustree)
-seur <- quick_RNAseqEr(pbmc_small, tsne = FALSE)
+cns <- quick_RNAseqEr(cns, tsne = FALSE)
 }

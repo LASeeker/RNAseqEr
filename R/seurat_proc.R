@@ -23,7 +23,7 @@
 #'
 #' @examples
 #' library(Seurat)
-#' pbmc_small_test <- seurat_proc(pbmc_small, tsne = FALSE)
+#' cns <- seurat_proc(cns)
 #'
 seurat_proc <- function(seur_obj,
                         n_pcs = 20,

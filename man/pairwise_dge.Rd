@@ -2,7 +2,7 @@
 % Please edit documentation in R/pairwise_dge.R
 \name{pairwise_dge}
 \alias{pairwise_dge}
-\title{Title}
+\title{pairwise_dge()}
 \usage{
 pairwise_dge(
   seur_obj,
@@ -52,9 +52,9 @@ saves lists of differentially expressed genes of pairwise compared
 clusters. Save an unfiltered and a filtered list for each comparison
 }
 \description{
-function performs DGE between all possible cluster combinations
-at one or more given resolutions and saves a raw and filtered output
-file for each comparison.
+function performs differential gene expression analysis pairwise
+between all possible cluster combinations at one or more given resolutions
+and saves a raw and filtered output file for each comparison.
 }
 \examples{
 library(Seurat)

@@ -21,6 +21,7 @@
 #' @param assay_use Which assay should be used for differential gene expression analusis.
 #' Default is "RNA".
 #' @param save_dir Directory to be used for saving output.
+#' @param dir_lab label used for which data is analysed. Default is "all_celltypes"
 #' @param custom_ref_genes TRUE/FALSE whether a list of genes and celltypes is
 #' being provided by the user.
 #' @param custom_gene_list if custom_ref_genes == TRUE provide custom gene list here.
@@ -71,6 +72,7 @@ annotate_seqEr <- function(seur_obj,
                            logfc_threshold = 0.8,
                            assay_use = "RNA",
                            save_dir = getwd(),
+                           dir_lab = "all_celltypes",
                            custom_ref_genes = FALSE,
                            custom_gene_list,
                            customclassif = "ScType_annotation",
@@ -157,7 +159,9 @@ annotate_seqEr <- function(seur_obj,
 
   dim_plot_dir <- paste0(
     save_dir,
-    "/outs/plots/ScType_Annotated_plot"
+    "/outs/",
+    dir_lab,
+    "/plots/ScType_Annotated_plot"
   )
 
   if (dir.exists(dim_plot_dir) == FALSE) {
@@ -177,8 +181,11 @@ annotate_seqEr <- function(seur_obj,
 
   marker_dir <- paste0(
     save_dir,
-    "/outs/tables/broad_celltype_markers"
+    "/outs/",
+    dir_lab,
+    "/tables/broad_celltype_markers"
   )
+
 
   if (dir.exists(marker_dir) == FALSE) {
     dir.create(marker_dir, recursive = TRUE)
@@ -222,6 +229,8 @@ annotate_seqEr <- function(seur_obj,
 
   if (dge == TRUE) {
 
+    Idents(seur_obj) <- customclassif
+
     markers <- FindAllMarkers(seur_obj,
         min.pct = min_pct,
         test.use = test_use,
@@ -250,7 +259,7 @@ annotate_seqEr <- function(seur_obj,
       unknown_levels <- levels[unlist(level_list)]
 
 
-      if (length(unknown_levels > 0)) {
+      if (length(unknown_levels) > 0) {
         for (o in 1:length(unknown_levels)) {
           temp_dat <- subset(markers, markers$cluster == unknown_levels[o])
           fil_temp <- subset(
@@ -264,7 +273,8 @@ annotate_seqEr <- function(seur_obj,
             curr_ct <- cell_type_list[l]
             bool <- fil_temp$gene %in% gs_list$gs_positive[[curr_ct]]
             fil_mark <- fil_temp[bool, ]
-            if (nrow(fil_mark) > length(gs_list$gs_positive[[curr_ct]]) / proportion) {
+            if (nrow(fil_mark) > 0 &
+                nrow(fil_mark) > length(gs_list$gs_positive[[curr_ct]]) / proportion) {
               if (exists("df_annot") == FALSE) {
                 df_annot <- data.frame(
                   cluster = unknown_levels[o],
@@ -276,7 +286,6 @@ annotate_seqEr <- function(seur_obj,
                   new_annot = curr_ct
                 )
                 df_annot <- rbind(df_annot, df_prelim)
-                print(l)
               }
             }
           }
@@ -339,7 +348,6 @@ annotate_seqEr <- function(seur_obj,
         }
         }
       }else{
-        print("debug horse")
           seur_obj@meta.data$RNAseqEr_annotation <- seur_obj@meta.data[[customclassif]]
           write.csv(markers, paste0(marker_dir,
                                         "/ScType_cluster_markers_",

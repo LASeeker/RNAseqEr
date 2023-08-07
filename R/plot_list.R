@@ -23,14 +23,15 @@
 #' library(Seurat)
 #' library(RColorBrewer)
 #' library(ggsci)
-#' pbmc_small_test <- seurat_proc(pbmc_small, tsne = FALSE)
-#' plot_list(pbmc_small_test)
+#' cns <- seurat_proc(cns, tsne = FALSE)
+#' plot_list(cns)
 plot_list <- function(seur_obj,
                       col_pattern = "RNA_snn_res.",
                       plot_cols = colour_palette(),
                       clust_lab = TRUE,
                       label_size = 8,
                       save_dir = getwd(),
+                      dir_lab = "all_celltypes",
                       width = 7,
                       height = 5,
                       use_reduction = "umap") {
@@ -38,10 +39,16 @@ plot_list <- function(seur_obj,
   res_names <- names(seur_obj@meta.data[extr_res_col])
   # gtools function, sorts gene_names alphanumeric:
   res_names <- gtools::mixedsort(res_names)
+  save_dir_path <- (paste0(
+      save_dir,
+      "/outs/",
+      dir_lab,
+      "/plots/resolution_plots/"))
+  dir.create(save_dir_path, recursive = TRUE)
+
   plot_l <- list()
   for (i in 1:length(res_names)) {
-    pdf(paste0(
-      save_dir, "/",
+    pdf(paste0(save_dir_path,
       res_names[i], "_umap.pdf"
     ), width = width, height = height)
     dim_plot <- DimPlot(seur_obj,

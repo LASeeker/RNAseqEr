@@ -25,8 +25,20 @@
 #' @param width width of output plot. Default is 5.
 #' @param height heigth of output plot. Default is 15.
 #' @param size size of labels above bar. Default is 11.
-#' @param diff_threshold resolution threshold for determining if clusters are
-#' different enough. The average expression is considered.
+#' @param max_diff_threshold resolution threshold for determining if clusters are
+#' different enough based on the maximum difference of average gene expression between
+#' two clusters.Default is 10 (differences must be larger than threshold).
+#' @param mean_diff_threshold resolution threshold for determining if clusters are
+#' different enough based on the mean difference of average gene expression between
+#' two clusters.Default is 0.01 (differences must be larger than threshold).
+#' @param eucl_dist_thres Threshold of Eucledian distance difference between
+#' the average expression across all int_genes when comparing two clusters to determine
+#' if they are different enough or too similar and should be merged. Default is
+#' 30.
+#' @param print_values TRUE/FALSE whether max gene expression difference, mean
+#' gene expresiion difference and Eucleadian discance should be printed for the
+#' comparison of each two cluster pair that passes the above set thresholds. Defautl
+#' is FALSE. Setting it to TRUE may enable finding meaningful thresholds.
 #'
 #' @return saves plots to file
 #' @export
@@ -50,7 +62,10 @@ heatmap_seqEr <- function(seur_obj,
                           height = 10000,
                           x_size = 11,
                           y_size = 15,
-                          diff_threshold = 10){
+                          max_diff_threshold = 10,
+                          mean_diff_thres = 0.1,
+                          eucl_dist_thres = 30,
+                          print_values = FALSE){
   if(use_resol == TRUE){
     res_col <- grep(pattern = col_pattern, names(seur_obj@meta.data))
     names_col <- names(seur_obj@meta.data)[res_col]
@@ -71,6 +86,7 @@ heatmap_seqEr <- function(seur_obj,
 
 
   for(i in 1: length(names_col)){
+    y = 0
     if(length(levels(as.factor(met_dat[[names_col[i]]])))>1){
 
 
@@ -105,7 +121,7 @@ heatmap_seqEr <- function(seur_obj,
     print(hm_av)
 
 
-    # compare custers in object
+    # compare clusters in object
     cluster_averages_df <- as.data.frame(AverageExpression(seur_obj,
                                                            group.by = names_col[i],
                                                            return.seurat = FALSE))
@@ -113,27 +129,66 @@ heatmap_seqEr <- function(seur_obj,
 
     clust_id_mtx <- combn(levels(as.factor(met_dat[[names_col[i]]])), 2)
 
+
     for(k in 1: ncol(clust_id_mtx)){
       ident_1 = clust_id_mtx[, k][[1]]
       ident_2 = clust_id_mtx[, k][[2]]
 
+      all_diff <- abs(cluster_averages_df[ident_1] - cluster_averages_df[ident_2])
+      names(all_diff) <- "diff"
+
       max_diff <- abs(max(cluster_averages_df[ident_1] - cluster_averages_df[ident_2]))
-      if(max_diff < diff_threshold){
-        Print(paste0("When considering resolution/ clustering ",
+
+      euclidean <- function(a, b) sqrt(sum((a - b)^2))
+      eucl_dist <- euclidean(cluster_averages_df[ident_1], cluster_averages_df[ident_2])
+
+
+
+      if(max_diff < max_diff_threshold &
+         mean(all_diff$diff, na.rm = TRUE) < mean_diff_thres |
+         eucl_dist < eucl_dist_thres){
+        print(paste0("When considering resolution/ clustering ",
                      names_col[i],
                      ", ",
                      clust_id_mtx[, k][[1]],
                      "and ",
                      ident_2 = clust_id_mtx[, k][[2]],
-                     " should be merged as they appaear too similar."))
+                     " may need to be merged as they may be too similar based on set thresholds."))
+        y = y + 1
       }else{
-        print(max_diff)
+        if(print_values == TRUE){
+          print(c("When considering resolution/ clustering",
+                     names_col[i],
+                     ", and the comparison of ",
+                     ident_1,
+                     "and",
+                     ident_2,
+                     "the max difference is ",
+                     max_diff,
+                     ", the mean difference is ",
+                     mean(all_diff$diff, na.rm = TRUE),
+                     "and the Eucledian distance is ",
+                     eucl_dist,
+                     "."
+                    ))
+        }
+
+
       }
 
     }
 
 
     }
+    df <- data.frame(resolution = names_col[i],
+                     cluster_sim_score = y)
+
+    if(i == 1){
+      keep_df <- df
+    }else{
+      keep_df <- rbind(keep_df, df)
+    }
   }
   print("Generated heatmap and saved them to file.")
+  return(keep_df)
 }

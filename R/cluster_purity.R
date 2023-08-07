@@ -11,6 +11,7 @@
 #' @param clust_lab TRUE/FALSE whether cluster labels should be displayed
 #' @param label_size size of cluster labels
 #' @param save_dir where output should be saved, default is working directory
+#' @param dir_lab label used for which data is analysed. Default is "all_celltypes"
 #' @param width width of output plot, default is 7
 #' @param height height of output plot, default is 5
 #'
@@ -26,8 +27,8 @@
 #' library(bluster)
 #' library(ggplot2)
 #' library(ggbeeswarm)
-#' seur <- seurat_proc(pbmc_small,tsne = FALSE)
-#' clu_pure(seur)
+#' cns <- seurat_proc(cns,tsne = FALSE)
+#' clu_pure(cns)
 clu_pure <- function(seur_obj,
                      reduction = "PCA",
                      col_pattern = "RNA_snn_res",
@@ -35,6 +36,7 @@ clu_pure <- function(seur_obj,
                      clust_lab = TRUE,
                      label_size = 8,
                      save_dir = getwd(),
+                     dir_lab = "all_celltypes",
                      width=7,
                      height=5){
   sce_obj <- as.SingleCellExperiment(seur_obj)
@@ -43,6 +45,17 @@ clu_pure <- function(seur_obj,
   # gtools function, sorts gene_names alphanumeric:
   names_col <- mixedsort(names_col)
   met_dat <- as.data.frame(colData(sce_obj))
+  clu_pure_dir <- paste0(save_dir,
+                         "/outs/",
+                         dir_lab,
+                         "/tables/cluster_purity_data/")
+  dir.create(clu_pure_dir, recursive = TRUE)
+
+  clu_pure_plot_dir <- paste0(save_dir,
+                         "/outs/",
+                         dir_lab,
+                         "/plots/cluster_purity_plots/")
+  dir.create(clu_pure_plot_dir, recursive = TRUE)
 
   for(i in 1: length(names_col)){
     clust <- met_dat[[names_col[i]]]
@@ -54,19 +67,7 @@ clu_pure <- function(seur_obj,
     pure_data$maximum <- factor(pure_data$maximum)
     pure_data$cluster <- factor(clust_int)
 
-    setwd(save_dir)
-
-    pure_dat_dir <- paste("../../../outs",
-                          "tables",
-                          "cluster_purity_data",
-                          sep = "/")
-
-    if(dir.exists(pure_dat_dir) == FALSE){
-      dir.create(pure_dat_dir, recursive = TRUE)
-      print("New directory created for saving cluster purity data")
-    }
-
-    write.csv(pure_data, paste0(pure_dat_dir,
+    write.csv(pure_data, paste0(clu_pure_dir,
                                 "/",
                                 names_col[i],
                                 "_cluster.purity.csv"))
@@ -77,8 +78,7 @@ clu_pure <- function(seur_obj,
       theme_bw(20) +
       xlab(names_col[i])
 
-    pdf(paste0(save_dir,
-               "/",
+    pdf(paste0(clu_pure_plot_dir,
                names_col[i],
                "_clu_purity.pdf"),
         width=width,

@@ -13,6 +13,7 @@ annotate_seqEr(
   logfc_threshold = 0.8,
   assay_use = "RNA",
   save_dir = getwd(),
+  dir_lab = "all_celltypes",
   custom_ref_genes = FALSE,
   custom_gene_list,
   customclassif = "ScType_annotation",
@@ -51,6 +52,8 @@ Default is 0.8.}
 Default is "RNA".}
 
 \item{save_dir}{Directory to be used for saving output.}
+
+\item{dir_lab}{label used for which data is analysed. Default is "all_celltypes"}
 
 \item{custom_ref_genes}{TRUE/FALSE whether a list of genes and celltypes is
 being provided by the user.}

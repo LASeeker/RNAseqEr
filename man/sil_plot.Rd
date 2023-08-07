@@ -12,6 +12,7 @@ sil_plot(
   clust_lab = TRUE,
   save_to_file = FALSE,
   save_dir = getwd(),
+  dir_lab = "all_celltypes",
   width = 7,
   height = 5
 )
@@ -34,6 +35,8 @@ in specified save_dir or only plotted in environment}
 
 \item{save_dir}{specify where output should be saved. Defaut is working directory}
 
+\item{dir_lab}{label used for which data is analysed. Default is "all_celltypes"}
+
 \item{width}{width of output plot, default is 7}
 
 \item{height}{height of output plot, default is 5}
@@ -51,6 +54,6 @@ library(Seurat)
 library(SingleCellExperiment)
 library(gtools)
 library(cluster)
-seur <- seurat_proc(pbmc_small,tsne = FALSE)
-av_sil_df <- sil_plot(seur)
+cns <- seurat_proc(cns,tsne = FALSE)
+av_sil_df <- sil_plot(cns)
 }
