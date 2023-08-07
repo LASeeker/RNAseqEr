@@ -34,16 +34,30 @@ abundance_test(
 clustering. For example "rough_annot" in the cns dataset from the RNAseqEr
 library.}
 
-\item{sample_id}{unique sample id}
+\item{sample_id}{unique sample id which is a metadata column in seur_obj that
+contains sample ids such as "uniq_id" in the RNAseqEr cns dataset.}
 
 \item{cols_interest}{metadata columns the user would like to check. Those can be
 factors of interest such as disease vs. control or young vs. old and can
-should also include sample id and donor id for example.}
+should also include sample id and donor id for example. They shouls also include
+all columns that are to be used to correct models by being used in account_for.
+Examples may be c("uniq_id", "Tissue", "gender", "AgeGroup", "caseNO",
+"SequencingPool", "X10XBatch") in the
+RNAseqEer cns dataset.}
 
 \item{test_factors}{metadata columns that should be used for differential
 abundance. The easiest test is between two groups such as disease and control.
 If there are more than 2 levels, a pairwise comparison will be run (therefore,
-the selection of factors with many levels is not ideal here.)}
+the selection of factors with many levels is not ideal here.)
+An example is c("Tissue", "gender", "AgeGroup") in the RNAseqEer cns dataset.}
+
+\item{account_for}{add factors to statistically correct for in the model if required.
+The default is FALSE where no additional factors are acconted for.
+If model is to be corrected for factors, they have to be column names in the
+seur_obj metadata and appear in the design matrix
+(they have to be have to be element of cols_interest but not of test_factors).
+They need to be supplied as strings concatenated and ending with a + symbol like this:
+"X10XBatch +" or "X10XBatch + SequencingPool +").}
 
 \item{k}{An integer scalar that specifies the number of nearest-neighbours to consider for the graph building.}
 
@@ -67,8 +81,19 @@ vertices to randomly sample. Must be 0 < prop < 1. Default is 0.2.}
 
 \item{plot_alpha}{Milo: significance level for Spatial FDR (default: 0.1)}
 
+\item{save_dir}{directory that is to be used as root to save output files.
+Default is getwd()}
+
+\item{dir_lab}{Celltype label that specifies if all cell types are
+being tested (Default = "all_celltypes") or a cell lineage which is important
+for structuring output in a systematic way.}
+
+\item{height}{Height used for output plots in pdf files. Default is 5}
+
+\item{width}{Width used for output plots in pdf files. Default is 8}
+
 \item{beeswarm_colour}{vector of three colours that are used for beeswarm
-plots.}
+plots. Default is c("red", "blue", "grey").}
 }
 \value{
 good question
@@ -78,6 +103,7 @@ This function performs an analysis to see if there are more or less cells/ nucle
 per cluster depending on a metadata factor such as condition.
 }
 \examples{
+library(here)
 milo_obj <- abundance_test(seur_obj = cns,
                       cluster_col = "rough_annot",
                       sample_id = "uniq_id",
@@ -86,6 +112,7 @@ milo_obj <- abundance_test(seur_obj = cns,
                                          "gender",
                                          "AgeGroup",
                                          "caseNO"),
-                      test_factors = c("Tissue", "gender", "AgeGroup"))
+                      test_factors = c("Tissue", "gender", "AgeGroup"),
+                      save_dir <- here())
 
 }

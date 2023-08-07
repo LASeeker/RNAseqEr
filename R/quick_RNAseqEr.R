@@ -220,7 +220,7 @@ quick_RNAseqEr <- function(seur_obj,
                            draw_lines = FALSE,
 
                            #for running gene ontology analysis
-                           gene_list,
+                           #gene_list,
                            min_log2FC_go = 0.25,
                            reverse_go = FALSE,
                            translate_gene_id_from = "SYMBOL",

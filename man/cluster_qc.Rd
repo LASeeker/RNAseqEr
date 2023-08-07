@@ -47,9 +47,6 @@ for cluster to pass QC. Default is 0.1.}
 
 \item{scale}{scale used to flag clusters. The smaller the more stringend is
 cluster QC. Default is 15.}
-
-\item{proportion_thres}{Threshold for how much a single factor level can
-contribute to a cluster.}
 }
 \value{
 seurat object with updated cluster QC measures. Additionally, plots

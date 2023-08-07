@@ -2,7 +2,7 @@
 #' @description
 #' Run gene ontology using cluster profiler
 #'
-#' @param srt Seurat object
+#' @param seur_obj Seurat object
 #' @param gene_list list of genes to use for gene ontology analyses
 #' @param min_log2FC log2 fold cutoff for genes to be considered in gene ontology
 #' analysis

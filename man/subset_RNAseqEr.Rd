@@ -25,5 +25,8 @@ This function subsets a Seurat object for each unique value in a provided
 metadata column.
 }
 \examples{
-subset_RNAseqEr(cns, subset_column = "rough_annot")
+library(here)
+subset_RNAseqEr(cns,
+                subset_column = "rough_annot",
+                save_dir= here())
 }

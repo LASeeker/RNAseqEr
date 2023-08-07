@@ -59,9 +59,17 @@ corresponding to each cluster. Default is FALSE}
 
 \item{height}{heigth of output plot. Default is 15.}
 
+\item{x_size}{size of labels above bar. Default is 11.}
+
+\item{y_size}{Legend size. Default is 15.}
+
 \item{max_diff_threshold}{resolution threshold for determining if clusters are
 different enough based on the maximum difference of average gene expression between
 two clusters.Default is 10 (differences must be larger than threshold).}
+
+\item{mean_diff_thres}{resolution threshold for determining if clusters are
+different enough based on the mean difference of average gene expression between
+two clusters.Default is 0.01 (differences must be larger than threshold).}
 
 \item{eucl_dist_thres}{Threshold of Eucledian distance difference between
 the average expression across all int_genes when comparing two clusters to determine
@@ -72,12 +80,6 @@ if they are different enough or too similar and should be merged. Default is
 gene expresiion difference and Eucleadian discance should be printed for the
 comparison of each two cluster pair that passes the above set thresholds. Defautl
 is FALSE. Setting it to TRUE may enable finding meaningful thresholds.}
-
-\item{size}{size of labels above bar. Default is 11.}
-
-\item{mean_diff_threshold}{resolution threshold for determining if clusters are
-different enough based on the mean difference of average gene expression between
-two clusters.Default is 0.01 (differences must be larger than threshold).}
 }
 \value{
 saves plots to file

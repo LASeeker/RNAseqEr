@@ -10,6 +10,8 @@
 #' @param label_size size of cluster labels
 #' @param save_dir file path to where plots should be saved, default is working
 #' directory
+#' @param dir_lab Label indicating if all celltypes are being processed (default =
+#' "all_celltypes) or a cell lineage which is important for output folder structure.
 #' @param width width of pdf file
 #' @param height height of pdf file
 #' @param use_reduction which dimensional reduction should be used for plotting

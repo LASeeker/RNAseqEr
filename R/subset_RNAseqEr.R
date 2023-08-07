@@ -8,10 +8,14 @@
 #' @param save_dir root directory in which outout is saved (subfolders are created)
 #'
 #' @return saves data to RDS files
+#' @import here
 #' @export
 #'
 #' @examples
-#' subset_RNAseqEr(cns, subset_column = "rough_annot")
+#' library(here)
+#' subset_RNAseqEr(cns,
+#'                 subset_column = "rough_annot",
+#'                 save_dir= here())
 subset_RNAseqEr <- function(seur_obj,
                             subset_column = "RNAseqEr_annotation",
                             save_dir = getwd()){
@@ -22,6 +26,7 @@ subset_RNAseqEr <- function(seur_obj,
   for(i in 1:length(levels(as.factor(seur_obj@meta.data[[subset_column]])))){
     curr_lev <- levels(as.factor(seur_obj@meta.data[[subset_column]]))[i]
     subs_seur <- subset(seur_obj, ident = curr_lev)
-    saveRDS(subs_seur, paste0(output_dir, "/", curr_lev, ".RDS"))
+    save_name <- sub(" ", "_", curr_lev)
+    saveRDS(subs_seur, paste0(output_dir, "/", save_name, ".RDS"))
   }
 }

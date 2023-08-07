@@ -19,6 +19,8 @@ perform_go(
 )
 }
 \arguments{
+\item{seur_obj}{Seurat object}
+
 \item{gene_list}{list of genes to use for gene ontology analyses}
 
 \item{min_log2FC}{log2 fold cutoff for genes to be considered in gene ontology
@@ -42,8 +44,6 @@ biological pathway but "MF" for molecular function for example is valid, too.}
 \item{qvalue_cutoff}{q value cutoff for significant gene ontology results}
 
 \item{read_able}{gene names in GO output readable? Default is TRUE}
-
-\item{srt}{Seurat object}
 }
 \value{
 returns a gene ontology result (add data format) ready for plotting

@@ -24,11 +24,12 @@
 #' corresponding to each cluster. Default is FALSE
 #' @param width width of output plot. Default is 5.
 #' @param height heigth of output plot. Default is 15.
-#' @param size size of labels above bar. Default is 11.
+#' @param x_size size of labels above bar. Default is 11.
+#' @param y_size Legend size. Default is 15.
 #' @param max_diff_threshold resolution threshold for determining if clusters are
 #' different enough based on the maximum difference of average gene expression between
 #' two clusters.Default is 10 (differences must be larger than threshold).
-#' @param mean_diff_threshold resolution threshold for determining if clusters are
+#' @param mean_diff_thres resolution threshold for determining if clusters are
 #' different enough based on the mean difference of average gene expression between
 #' two clusters.Default is 0.01 (differences must be larger than threshold).
 #' @param eucl_dist_thres Threshold of Eucledian distance difference between

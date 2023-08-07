@@ -46,7 +46,6 @@ quick_RNAseqEr(
   col_pattern_hm = "RNA_snn_res",
   label_hm = TRUE,
   draw_lines = FALSE,
-  gene_list,
   min_log2FC_go = 0.25,
   reverse_go = FALSE,
   translate_gene_id_from = "SYMBOL",

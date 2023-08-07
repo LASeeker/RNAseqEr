@@ -6,14 +6,27 @@
 #' @param cluster_col name of metadata column that should be considered for
 #' clustering. For example "rough_annot" in the cns dataset from the RNAseqEr
 #' library.
-#' @param sample_id unique sample id
+#' @param sample_id unique sample id which is a metadata column in seur_obj that
+#' contains sample ids such as "uniq_id" in the RNAseqEr cns dataset.
 #' @param cols_interest metadata columns the user would like to check. Those can be
 #' factors of interest such as disease vs. control or young vs. old and can
-#' should also include sample id and donor id for example.
+#' should also include sample id and donor id for example. They shouls also include
+#' all columns that are to be used to correct models by being used in account_for.
+#' Examples may be c("uniq_id", "Tissue", "gender", "AgeGroup", "caseNO",
+#' "SequencingPool", "X10XBatch") in the
+#' RNAseqEer cns dataset.
 #' @param test_factors  metadata columns that should be used for differential
 #' abundance. The easiest test is between two groups such as disease and control.
 #' If there are more than 2 levels, a pairwise comparison will be run (therefore,
 #' the selection of factors with many levels is not ideal here.)
+#' An example is c("Tissue", "gender", "AgeGroup") in the RNAseqEer cns dataset.
+#' @param account_for add factors to statistically correct for in the model if required.
+#' The default is FALSE where no additional factors are acconted for.
+#' If model is to be corrected for factors, they have to be column names in the
+#' seur_obj metadata and appear in the design matrix
+#' (they have to be have to be element of cols_interest but not of test_factors).
+#' They need to be supplied as strings concatenated and ending with a + symbol like this:
+#' "X10XBatch +" or "X10XBatch + SequencingPool +").
 #' @param k An integer scalar that specifies the number of nearest-neighbours to consider for the graph building.
 #' @param d he number of dimensions to use if the input is a matrix of cells X
 #' reduced dimensions. If this is provided, transposed should also be set=TRUE.
@@ -27,14 +40,22 @@
 #' @param plot_text size of plot text. Default is 3.
 #' @param plot_point size for points in plot. Default is 0.5
 #' @param plot_alpha Milo: significance level for Spatial FDR (default: 0.1)
+#' @param save_dir directory that is to be used as root to save output files.
+#' Default is getwd()
+#' @param dir_lab Celltype label that specifies if all cell types are
+#' being tested (Default = "all_celltypes") or a cell lineage which is important
+#' for structuring output in a systematic way.
+#' @param height Height used for output plots in pdf files. Default is 5
+#' @param width Width used for output plots in pdf files. Default is 8
 #' @param beeswarm_colour vector of three colours that are used for beeswarm
-#' plots.
+#' plots. Default is c("red", "blue", "grey").
 #'
 #' @return good question
-#' @import Seurat SingleCellExperiment miloR ggplot2 statmod scater patchwork
+#' @import Seurat SingleCellExperiment miloR ggplot2 statmod scater patchwork here
 #' @export
 #'
 #' @examples
+#' library(here)
 #' milo_obj <- abundance_test(seur_obj = cns,
 #'                       cluster_col = "rough_annot",
 #'                       sample_id = "uniq_id",
@@ -43,14 +64,15 @@
 #'                                          "gender",
 #'                                          "AgeGroup",
 #'                                          "caseNO"),
-#'                       test_factors = c("Tissue", "gender", "AgeGroup"))
+#'                       test_factors = c("Tissue", "gender", "AgeGroup"),
+#'                       save_dir <- here())
 #'
 
 abundance_test <- function(seur_obj,
-                           cluster_col, #Fine_cluster
-                           sample_id, #use uniq_id
-                           cols_interest, #c("uniq_id", "Tissue", "gender", "AgeGroup", "caseNO")
-                           test_factors, #use c("Tissue", "gender", "AgeGroup"),
+                           cluster_col,
+                           sample_id,
+                           cols_interest,
+                           test_factors,
                            account_for = FALSE, # use for example "AgeGroup + " # has to be in cols_interest
                            k = 30,
                            d = 30,

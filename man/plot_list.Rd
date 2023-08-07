@@ -33,6 +33,9 @@ package}
 \item{save_dir}{file path to where plots should be saved, default is working
 directory}
 
+\item{dir_lab}{Label indicating if all celltypes are being processed (default =
+"all_celltypes) or a cell lineage which is important for output folder structure.}
+
 \item{width}{width of pdf file}
 
 \item{height}{height of pdf file}

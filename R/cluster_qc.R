@@ -21,8 +21,6 @@
 #' @param height height of output plots tefault os 5.
 #' @param scale  scale used to flag clusters. The smaller the more stringend is
 #' cluster QC. Default is 15.
-#' @param proportion_thres Threshold for how much a single factor level can
-#' contribute to a cluster.
 #'
 #' @return seurat object with updated cluster QC measures. Additionally, plots
 #' and tables are saved to file
