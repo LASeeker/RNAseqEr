@@ -427,7 +427,8 @@ milo_obj <- abundance_test(seur_obj = seur,
                                              "gender",
                                              "AgeGroup",
                                              "caseNO"),
-                           test_factors = c("Tissue", "gender", "AgeGroup"))
+                           test_factors = c("Tissue", "gender", "AgeGroup"),
+                           dir_lab = "Oligodendrocytes")
 
 ```
 

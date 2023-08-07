@@ -29,7 +29,10 @@ Imports:
     clustree,
     openxlsx,
     HGNChelper,
-    miloR
+    miloR,
+    scater,
+    statmod,
+    patchwork
 Suggests: 
     knitr,
     rmarkdown,
