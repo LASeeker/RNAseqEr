@@ -126,7 +126,7 @@ to a folder. Remember to set your save_directory that you'd like to use, the
 default is the current working directory. 
 
 
-```{r,  echo=FALSE,results='hide', fig.keep='all'}
+```{r,  echo=FALSE,results='hide', fig.keep='all', fig.width= 8, fig.height=5}
 
 plot_list(cns, save_dir = "../")
 
@@ -144,7 +144,7 @@ If the second is true, we will use cluster purity measures to first separate the
 dataset best for clusters that are physically distinct on in the umap/tsne space 
 and thus most likely represent different cell types.
 
-```{r,  echo = FALSE, results = 'hide', fig.keep = 'all'}
+```{r,  echo = FALSE, results = 'hide', fig.keep = 'all', fig.width= 8, fig.height=5}
 clu_pure(cns, save_dir = "../")
 
 ```
@@ -418,7 +418,7 @@ statistically sound which is less trivial then it may appear at first.
 In our hands Milo (Ref) works well and we implemnted it here. We encourage the
 user to try and test other methods as well. 
 
-```{r}
+```{r, fig.width= 8, fig.height=5}
 milo_obj <- abundance_test(seur_obj = seur,
                            cluster_col = "cluster_id",
                            sample_id = "uniq_id",
@@ -432,7 +432,109 @@ milo_obj <- abundance_test(seur_obj = seur,
 
 ```
 
+# Differential gene expression with condition
 
+Next it is interesting to find out which genes are differentially expressed with
+variables of interest such as disease condition, treatment group, age group or
+tissue region for example. One approach is to see which genes are expressed in 
+the clusters more abundant in those groups (see above). The other is to look
+within cell lineage or clusterwise for genes that are differentially expressed.
+
+
+
+```{r}
+find_cond_markers(seur,
+                  int_cols = c("AgeGroup","Tissue", "gender"),
+                  cluster_id = "cluster_id",
+                  dir_lab = "Oligodendrocytes")
+            
+
+
+```
+
+The example below shows how to collect data from the cluster-wise differential gene
+expression analysis that we performed above and plot them as violin plots. 
+```{r, fig.height= 50, fig.width=8}
+library(here)
+cond_genes <- gen_mark_list(file_dir = here("outs", 
+                                            "all_celltypes", 
+                                            "tables", 
+                                            "condition_mark" , 
+                                            "rough_annot" , 
+                                            "clusterwise"),
+                            condition = TRUE,
+                            test_cond = c("AgeGroup", "Tissue"))
+
+# Subset for the condition we would like to plot starting with age
+age_mark <- subset(cond_genes, 
+                              cond_genes$condition == "AgeGroup")
+
+#There is no point in plotting the same genes several times. Therefore, we are
+# removing suplicated gene names.
+
+age_mark <- age_mark[!duplicated(age_mark$gene),]
+
+# Save vln plots to file
+save_vln(cns, 
+         marker_list = age_mark$gene,
+         save_label = "Age_mark",
+         split_by = "AgeGroup",
+         group_by = "rough_annot",
+         plotheight = 50)
+
+here()
+
+```
+
+The same is also possible to perform on the overall differential gene expression
+analsis from above by pointing at the corresponding folder.
+```{r, plot.width = 8, plot.height = 30}
+cond_genes_ov <- gen_mark_list(file_dir = here("outs", 
+                                            "all_celltypes", 
+                                            "tables", 
+                                            "condition_mark" , 
+                                            "rough_annot" , 
+                                            "overall"),
+                            condition = TRUE,
+                            test_cond = c("AgeGroup", "Tissue"))
+
+# Subset for the condition we would like to plot, this time choosing "Tissue"
+tissue_mark <- subset(cond_genes_ov, 
+                              cond_genes_ov$condition == "Tissue")
+
+#There is no point in plotting the same genes several times. Therefore, we are
+# removing suplicated gene names.
+
+tissue_mark <- tissue_mark[!duplicated(tissue_mark$gene),]
+
+# Save vln plots to file
+save_vln(cns, 
+         marker_list = tissue_mark$gene,
+         save_label = "Tissue_mark",
+         split_by = "Tissue",
+         group_by = "rough_annot",
+         plotheight = 30)
+
+
+
+
+```
+Similarly, Feature plots can be useful to look visualise differences in gene expression. 
+We can gene list above to visualise differences with a condition group such as tissue.
+
+
+```{r, plot.width = 8, plot.height = 30}
+save_feat_plots(cns, 
+                marker_list = tissue_mark$gene,
+                save_label = "Tissue_mark",
+                split_by = "Tissue",
+                plotheight = 30)
+
+
+```
+Next steps:
+- volcano plots
+- run clustering for all
 
 # Session Info
 

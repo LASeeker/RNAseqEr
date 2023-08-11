@@ -1,7 +1,7 @@
 #' int_res_all_mark
 #' @description
 #' This function performs a overall differential gene expression analysis using
-#' Seurat's FindAllMarkers() at a chosen number of resultions and saves both
+#' Seurat's FindAllMarkers() at a chosen number of resoltions and saves both
 #' raw and filtered lists in a provided output directory.
 #' @param seur_obj Seurat object that has been quality controlled and clustered.
 #' @param int_cols list of colums of interest that should be compared with one another

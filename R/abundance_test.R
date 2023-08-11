@@ -55,7 +55,6 @@
 #' @export
 #'
 #' @examples
-#' library(here)
 #' milo_obj <- abundance_test(seur_obj = cns,
 #'                       cluster_col = "rough_annot",
 #'                       sample_id = "uniq_id",
@@ -65,7 +64,7 @@
 #'                                          "AgeGroup",
 #'                                          "caseNO"),
 #'                       test_factors = c("Tissue", "gender", "AgeGroup"),
-#'                       save_dir <- here())
+#'                       save_dir = getwd()
 #'
 
 abundance_test <- function(seur_obj,
@@ -113,7 +112,7 @@ abundance_test <- function(seur_obj,
                           dir_lab,
                           "/plots/miloR")
   if(dir.exists(milo_dir_plot) == FALSE){
-    dir.create(milo_dir_plot)
+    dir.create(milo_dir_plot, recursive = TRUE)
   }
 
 
@@ -122,7 +121,7 @@ abundance_test <- function(seur_obj,
                          dir_lab,
                          "/tables/miloR")
   if(dir.exists(milo_dir_tab) == FALSE){
-    dir.create(milo_dir_tab)
+    dir.create(milo_dir_tab, recursive = TRUE)
   }
 
 
@@ -179,7 +178,8 @@ abundance_test <- function(seur_obj,
         arrange(SpatialFDR) %>%
         head()
 
-      qc_plot <- ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+      qc_plot <- ggplot(da_results, aes(PValue)) + geom_histogram(bins=50) +
+        ggtitle(curr_fact)
 
       print(qc_plot)
 
@@ -193,7 +193,8 @@ abundance_test <- function(seur_obj,
 
       qc_plot2 <- ggplot(da_results, aes(logFC, -log10(SpatialFDR))) +
         geom_point() +
-        geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+        geom_hline(yintercept = 1)  +
+        ggtitle(curr_fact)
 
       print(qc_plot2)
 
@@ -212,7 +213,8 @@ abundance_test <- function(seur_obj,
                                 colour_by= curr_fact,
                                 text_by = cluster_col,
                                 text_size = plot_text, point_size = plot_point) +
-        guides(fill="none")
+        guides(fill="none")  +
+        ggtitle(curr_fact)
 
       nh_graph_pl <- plotNhoodGraphDA(milo_obj,
                                       da_results,
@@ -222,8 +224,8 @@ abundance_test <- function(seur_obj,
 
       save_plot <- umap_pl + nh_graph_pl +
         plot_layout(guides="collect")
-      print(save_plot)
 
+      print(save_plot)
 
       pdf(paste0(milo_dir_plot,
                  "/",
@@ -251,12 +253,17 @@ abundance_test <- function(seur_obj,
 
       da_results$FDR <- factor(da_results$FDR, levels = c("0.05", "0.1",  "> 0.1"))
 
-      beeswarm <- ggplot(da_results, aes(x = cluster_id, y = logFC , color = FDR)) +
+      beeswarm <- ggplot(da_results, aes(x = .data[[cluster_col]], y = logFC , color = FDR)) +
         geom_quasirandom()+
         scale_color_manual(values = beeswarm_colour) + coord_flip()+
         theme_minimal() +
         xlab("Cluster ID") +
-        ylab("Log Fold Change")
+        ylab(paste0("(<- ",
+                    levels(as.factor(seur_obj@meta.data[[curr_fact]]))[1],
+                    ") Log Fold Change (",
+                    levels(as.factor(seur_obj@meta.data[[curr_fact]]))[2],
+                    " -->)")) +
+        ggtitle(curr_fact)
 
 
       pdf(paste0(milo_dir_plot,
@@ -300,11 +307,22 @@ abundance_test <- function(seur_obj,
           head()
 
 
-        ggplot(da_results, aes(PValue)) + geom_histogram(bins=50)
+        ggplot(da_results, aes(PValue)) +
+          geom_histogram(bins=50) +
+          ggtitle(paste0(curr_fact,
+                         " ",
+                         all_comb[2,k],
+                         " vs. ",
+                         all_comb[1,k]))
 
         ggplot(da_results, aes(logFC, -log10(SpatialFDR))) +
           geom_point() +
-          geom_hline(yintercept = 1) ## Mark significance threshold (10% FDR)
+          geom_hline(yintercept = 1) +
+          ggtitle(paste0(curr_fact,
+                         " ",
+                         all_comb[2,k],
+                         " vs. ",
+                         all_comb[1,k]))
 
         milo_obj <- buildNhoodGraph(milo_obj)
         umap_pl <- plotReducedDim(milo_obj,
@@ -312,7 +330,12 @@ abundance_test <- function(seur_obj,
                                   colour_by= curr_fact,
                                   text_by = cluster_col,
                                   text_size = plot_text, point_size = plot_point) +
-          guides(fill="none")
+          guides(fill="none") +
+          ggtitle(paste0(curr_fact,
+                         " ",
+                         all_comb[2,k],
+                         " vs. ",
+                         all_comb[1,k]))
 
 
         nh_graph_pl <- plotNhoodGraphDA(milo_obj,
@@ -349,12 +372,17 @@ abundance_test <- function(seur_obj,
 
         da_results$FDR <- factor(da_results$FDR, levels = c("0.05", "0.1",  "> 0.1"))
 
-        beeswarm <- ggplot(da_results, aes(x = cluster_id, y = logFC , color = FDR)) +
+        beeswarm <- ggplot(da_results, aes(x = .data[[cluster_col]], y = logFC , color = FDR)) +
           geom_quasirandom()+
           scale_color_manual(values = beeswarm_colour) + coord_flip()+
           theme_minimal() +
           xlab("Cluster ID") +
-          ylab("Log Fold Change")
+          ylab(paste0("(<- ",
+                      all_comb[1,k],
+                      ") Log Fold Change (",
+                      all_comb[2,k],
+                      " -->)")) +
+          ggtitle(curr_fact)
 
         plot(beeswarm)
 
@@ -401,9 +429,6 @@ abundance_test <- function(seur_obj,
 }
 
 
-
-# save design matrix?
-# add directionality to plots
 
 
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/gen_mark_list.R
 \name{gen_mark_list}
 \alias{gen_mark_list}
-\title{gen)mark_list}
+\title{Generate marker list}
 \usage{
 gen_mark_list(
   file_dir = getwd(),
@@ -11,7 +11,9 @@ gen_mark_list(
   pct_1 = 0.25,
   pct_2 = 0.6,
   pairwise = FALSE,
-  n_top = 10
+  n_top = 10,
+  condition = FALSE,
+  test_cond = NULL
 )
 }
 \arguments{
@@ -32,13 +34,19 @@ of interest expressing the gene. Default is 0.6}
 pairwise or not}
 
 \item{n_top}{number of top genes per cluster considered. Default is 10.}
+
+\item{condition}{TRUE/FALSE whether cluster marker or condition markers are
+tested. Default is FALSE, so it is assumed that cluster markers are being
+tested. TRUE enables the test of different conditions such as age, sex,
+condition and treatment group separately.}
 }
 \value{
 filtered data frame of potential cluster marker genes with n_top candidate
 genes per cluster/ group of interest
 }
 \description{
-gen)mark_list
+Use diffential gene expression analysis results to generate a list of top markers
+for each cluster/ condition.
 }
 \examples{
 library(Seurat)

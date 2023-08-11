@@ -103,7 +103,6 @@ This function performs an analysis to see if there are more or less cells/ nucle
 per cluster depending on a metadata factor such as condition.
 }
 \examples{
-library(here)
 milo_obj <- abundance_test(seur_obj = cns,
                       cluster_col = "rough_annot",
                       sample_id = "uniq_id",
@@ -113,6 +112,6 @@ milo_obj <- abundance_test(seur_obj = cns,
                                          "AgeGroup",
                                          "caseNO"),
                       test_factors = c("Tissue", "gender", "AgeGroup"),
-                      save_dir <- here())
+                      save_dir = getwd()
 
 }
