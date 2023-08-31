@@ -14,7 +14,8 @@ pairwise_dge(
   fil_pct_2 = 0.1,
   save_dir = getwd(),
   test_use = "MAST",
-  assay_use = "RNA"
+  assay_use = "RNA",
+  dir_lab = "all_celltypes"
 )
 }
 \arguments{
@@ -46,6 +47,9 @@ directory}
 Default is "MAST" here but all other tests implemented in Seurat can be used}
 
 \item{assay_use}{Default is RNA. In case integrated objects are used.}
+
+\item{dir_lab}{specifies which cell lineage is investigated which is important for
+output folder structure. The default is "all_celltypes".}
 }
 \value{
 saves lists of differentially expressed genes of pairwise compared

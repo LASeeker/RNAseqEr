@@ -8,6 +8,7 @@ save_feat_plots(
   seur_obj,
   marker_list,
   dir_lab = "all_celltypes",
+  condition_label = "Condition",
   save_label = "cluster_mark",
   save_dir = getwd(),
   numb_genes = 9,
@@ -24,6 +25,9 @@ save_feat_plots(
 
 \item{dir_lab}{label that indicated cell lineage to structure output. The
 default is "all_celltypes"}
+
+\item{condition_label}{This is a label to create the output folder structure.
+It can be either set to "Cluster" or "Condition".}
 
 \item{save_label}{label that is provided to structure output and clarifies
 if condition markers or cluster markers are being plotted.}

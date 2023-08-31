@@ -7,6 +7,8 @@
 #' @param marker_list list of marker genes that should be plotted
 #' @param dir_lab label that indicated cell lineage to structure output. The
 #' default is "all_celltypes"
+#' @param condition_label This is a label to create the output folder structure.
+#' It can be either set to "Cluster" or "Condition".
 #' @param save_label label that is provided to structure output and clarifies
 #' if condition markers or cluster markers are being plotted.
 #' @param save_dir directory where the output should be saved. Default is the
@@ -29,6 +31,7 @@
 save_feat_plots <- function(seur_obj,
                             marker_list,
                             dir_lab = "all_celltypes",
+                            condition_label = "Condition",
                             save_label = "cluster_mark",
                             save_dir = getwd(),
                             numb_genes = 9,
@@ -50,18 +53,22 @@ save_feat_plots <- function(seur_obj,
                                 ncol = n_col)
     }
 
-    dir_save <- paste0(save_dir,
+    feat_save <- paste0(save_dir,
                        "/outs/",
                        dir_lab,
                        "/plots/",
+                       condition_label,
+                       "/",
                        save_label,
                        "/FeaturePlots")
-    if(dir.exists(dir_save) == FALSE){
-      dir.create(dir_save, recursive = TRUE)
+
+    if(dir.exists(feat_save) == FALSE){
+      dir.create(feat_save, recursive = TRUE)
+      print("creating new directory")
     }
 
 
-    pdf(paste0(dir_save, "/", save_label, "_", i, ".pdf", sep=""),
+    pdf(paste0(feat_save, "/", save_label, "_", i, ".pdf"),
         height=plotheight, width = plotwidth)
 
     print(feature_plot)

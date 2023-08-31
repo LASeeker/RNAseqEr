@@ -17,16 +17,13 @@
 #' @param pvalue_cutoff p value cutoff for significant gene ontology results
 #' @param qvalue_cutoff q value cutoff for significant gene ontology results
 #' @param read_able gene names in GO output readable? Default is TRUE
-#' @import clusterProfiler
+#' @import clusterProfiler org.Hs.eg.db Seurat
 #'
 #' @return returns a gene ontology result (add data format) ready for plotting
 #' and saving
 #' @export
 #'
 #' @examples
-#' library(Seurat)
-#' library(clusterProfiler)
-#' library(org.Hs.eg.db)
 #' data(dge_1_0)
 #'
 #' perform_go(pbmc_small, gene_list = dge_1_0)
@@ -41,12 +38,13 @@ perform_go <- function(seur_obj,
                        ontology = "BP",
                        pvalue_cutoff = 0.05,
                        qvalue_cutoff = 0.05,
-                       read_able = TRUE) {
+                       read_able = TRUE,
+                       logFC_column = "avg_log2FC") {
   if (reverse == TRUE) {
-    genes_inc <- as.data.frame(subset(gene_list, gene_list$avg_log2FC < min_log2FC))
+    genes_inc <- as.data.frame(subset(gene_list, gene_list[[logFC_column]] < min_log2FC))
     # allows testeing for genes more expressed in the other group
   } else {
-    genes_inc <- as.data.frame(subset(gene_list, gene_list$avg_log2FC > min_log2FC))
+    genes_inc <- as.data.frame(subset(gene_list, gene_list[[logFC_column]] > min_log2FC))
   }
 
   if (class(genes_inc$X) != "NULL") { # this happens when reading in a saves .csv

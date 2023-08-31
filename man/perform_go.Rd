@@ -15,7 +15,8 @@ perform_go(
   ontology = "BP",
   pvalue_cutoff = 0.05,
   qvalue_cutoff = 0.05,
-  read_able = TRUE
+  read_able = TRUE,
+  logFC_column = "avg_log2FC"
 )
 }
 \arguments{
@@ -53,9 +54,6 @@ and saving
 Run gene ontology using cluster profiler
 }
 \examples{
-library(Seurat)
-library(clusterProfiler)
-library(org.Hs.eg.db)
 data(dge_1_0)
 
 perform_go(pbmc_small, gene_list = dge_1_0)

@@ -21,6 +21,8 @@
 #' @param test_use statistical test to use for differential gene expression.
 #' Default is "MAST" here but all other tests implemented in Seurat can be used
 #' @param assay_use Default is RNA. In case integrated objects are used.
+#' @param dir_lab specifies which cell lineage is investigated which is important for
+#' output folder structure. The default is "all_celltypes".
 #'
 #' @return saves lists of differentially expressed genes of pairwise compared
 #' clusters. Save an unfiltered and a filtered list for each comparison
@@ -43,7 +45,18 @@ pairwise_dge <- function(seur_obj,
                          fil_pct_2 = 0.1,
                          save_dir = getwd(),
                          test_use = "MAST",
-                         assay_use = "RNA") {
+                         assay_use = "RNA",
+                         dir_lab = "all_celltypes") {
+  save_path <- paste0(save_dir,
+                      "/outs/",
+                      dir_lab,
+                      "/tables/cluster_marker/pairwise"
+  )
+
+  if(dir.exists(save_path) == FALSE){
+    dir.create(save_path, recursive = TRUE)
+  }
+
   for (k in 1:length(int_cols)) {
     curr_res <- int_cols[k]
     Idents(seur_obj) <- curr_res
@@ -62,7 +75,7 @@ pairwise_dge <- function(seur_obj,
       clust_mark$comp_to_clust <- clust_id_list[, i][[2]]
       write.csv(
         clust_mark,
-        paste(save_dir,
+        paste(save_path,
           "/",
           int_cols[k],
           "_",

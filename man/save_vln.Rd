@@ -9,13 +9,14 @@ save_vln(
   marker_list,
   cols = colour_palette(),
   dir_lab = "all_celltypes",
+  condition_label = "Condition",
   save_label = "cluster_mark",
   split_by = "NULL",
   save_dir = getwd(),
   numb_genes = 10,
   plotheight = 20,
   plotwidth = 8,
-  group_by = Idents(seur_obj),
+  group_by = "RNAseqEr_annotation",
   pt_size = 0.1,
   n_col = 1
 )
@@ -28,7 +29,10 @@ save_vln(
 \item{cols}{plot colour. Default is colour_palette() from the RNAseqEr library.}
 
 \item{dir_lab}{a label that specifies which cell lineage is investigated. Needed
-to structure output. THe default is "all_celltypes".}
+to structure output. The default is "all_celltypes".}
+
+\item{condition_label}{This is a label to create the output folder structure.
+It can be either set to "Cluster" or "Condition".}
 
 \item{save_label}{Additional label that can be used to specify which condition
 is used to save if a cluster or specific condition markers are tested. The default

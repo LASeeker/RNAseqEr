@@ -15,8 +15,7 @@ cluster_qc(
   dir_lab = "all_celltypes",
   width = 8,
   height = 5,
-  scale = 15,
-  propotion_thres = c(0.3, 0.2)
+  scale = 15
 )
 }
 \arguments{
@@ -60,6 +59,6 @@ drive clustering.
 }
 \examples{
 seur_obj <- cluster_qc(cns,
-                   cluster_col = "Fine_cluster",
+                   cluster_col = "rough_annot",
                    vars = c("caseNO", "process_number"))
 }

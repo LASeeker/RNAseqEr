@@ -3,13 +3,15 @@
 #' This function uses cluster purity measurements at different resoution and looks
 #' for a resolution suitable for a rough celltype annotattion.
 #'
-#' @param save_path path to where cluster purity measures are saved as
+#' @param save_dir path to main working directory. Use the same folder as for
+#' running cluster_purity.R and the function will find the appropriate files.
 #' .csv files. Default is "getwd()/outs/all_celltypes/tables/cluster_purity_data".
-#' @param exponent this is used to weigh the cluster purity measure. A quotient of
-#' cluster purity ^ exponent / cluster count is used to calculate an overall pure
+#' @param weight_factor this is used to weigh the cluster purity measure. A quotient of
+#' cluster purity * weight_factor / cluster count is used to calculate an overall pure
 #' measure.
 #' @param pure_thres Threshold of cluster purity to be used. The function is looking
 #' for the maximum number of clusters over this purity threshold.
+#' @param second_thres threshold of the calculated pure measure. Default is 1.
 #'
 #' @return
 #' A recommendation of a clustering resolution that maximizes cluster purity and
@@ -23,13 +25,18 @@
 #'
 #' cns <- seurat_proc(cns, tsne = FALSE)
 #' clu_pure(cns, save_dir = save_dir_cr)
-#' keep_res <- max_pure(cns, save_dir = save_dir_cr)
+#' keep_res <- max_pure(save_dir = save_dir_cr)
 #'
 #'
-max_pure <- function(save_path = paste0(getwd(),
-                                        "/outs/all_celltypes/tables/cluster_purity_data"),
-                     exponent = 22,
-                     pure_thres = 0.99){
+max_pure <- function(dir_lab = "all_celltypes",
+                     save_dir = getwd(),
+                     weight_factor = 22,
+                     pure_thres = 0.96,
+                     second_thres = 1){
+  save_path <- paste0(save_dir,
+                      "/outs/",
+                      dir_lab,
+                      "/tables/cluster_purity_data")
   files <- list.files(save_path, pattern = "purity.csv")
   myfiles <- lapply(paste(save_path, files, sep = "/"), read.csv)
 
@@ -37,7 +44,7 @@ max_pure <- function(save_path = paste0(getwd(),
     dat <- myfiles[[j]]
     clu_count <- length(levels(as.factor(dat$cluster)))
     clu_pur_mean <- mean(dat$purity)
-    pure_measure <- (clu_pur_mean^exponent)/clu_count
+    pure_measure <- (clu_pur_mean*weight_factor)/clu_count
     df_temp <- data.frame(clu_res <- files[j],
                           mean_pur = clu_pur_mean,
                           clu_count = clu_count,
@@ -50,7 +57,9 @@ max_pure <- function(save_path = paste0(getwd(),
       keep_num_clu<- clu_count
     }else{
       keep_df <- rbind(keep_df, df_temp)
-      if(clu_pur_mean >  pure_thres & clu_count > keep_num_clu){
+      if(clu_pur_mean >  pure_thres &
+         clu_count > keep_num_clu &
+         pure_measure > second_thres) {
         keep_res <- files[j]
         keep_num_clu<- clu_count
       }
@@ -68,7 +77,10 @@ max_pure <- function(save_path = paste0(getwd(),
 
   #keep_resolution is important for annotation and sub-setting.
   save_summary <- paste0(save_path, "/summary_purity_stats")
-  dir.create(save_summary)
+  if(dir.exists(save_summary) == FALSE){
+    dir.create(save_summary)
+  }
+
   write.csv(keep_df, paste0(save_summary, "/summary_purity_stats.csv"))
   return(keep_resolution)
 }

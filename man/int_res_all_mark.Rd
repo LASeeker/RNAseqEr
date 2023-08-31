@@ -13,7 +13,8 @@ int_res_all_mark(
   fil_pct_1 = 0.25,
   fil_pct_2 = 0.6,
   save_dir = getwd(),
-  test_use = "MAST"
+  test_use = "MAST",
+  dir_lab = "all_celltypes"
 )
 }
 \arguments{
@@ -40,6 +41,9 @@ current working directory}
 
 \item{test_use}{statistical approach being used for differential gene expression
 analysis. Default is MAST.}
+
+\item{dir_lab}{specifies which cell lineage is investigated which is important for
+output folder structure. The default is "all_celltypes".}
 }
 \value{
 saves lists of differentially expressed genes between clusters of

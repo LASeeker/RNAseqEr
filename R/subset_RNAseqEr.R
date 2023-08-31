@@ -22,11 +22,13 @@ subset_RNAseqEr <- function(seur_obj,
   Idents(seur_obj) <- subset_column
   output_dir <- paste0(save_dir,
                        "/outs/data")
-  dir.create(output_dir, recursive = TRUE)
+  if(dir.exists(output_dir) == FALSE){
+    dir.create(output_dir, recursive = TRUE)
+  }
   for(i in 1:length(levels(as.factor(seur_obj@meta.data[[subset_column]])))){
     curr_lev <- levels(as.factor(seur_obj@meta.data[[subset_column]]))[i]
     subs_seur <- subset(seur_obj, ident = curr_lev)
-    save_name <- sub(" ", "_", curr_lev)
+    save_name <- gsub(" ", "_", curr_lev)
     saveRDS(subs_seur, paste0(output_dir, "/", save_name, ".RDS"))
   }
 }

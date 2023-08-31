@@ -183,7 +183,7 @@ annotate_seqEr <- function(seur_obj,
     save_dir,
     "/outs/",
     dir_lab,
-    "/tables/broad_celltype_markers"
+    "/tables/DGE/broad_celltype_markers"
   )
 
 

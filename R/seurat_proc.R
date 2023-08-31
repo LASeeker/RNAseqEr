@@ -15,6 +15,12 @@
 #' determine n_pcs
 #' @param tsne TRUE/FALSE, default is true which means TSNE dim reduction is
 #' performed additionally to UMAP
+#' @param dir_lab label that indicated cell lineage to structure output. The
+#' default is "all_celltypes"
+#' @param save_dir directory where the output should be saved. Default is the
+#' current working directory.
+#' @param plotheight height of elbow plot output. Default is 5.
+#' @param plotwidth width of elbow plot output. Default is 5.
 #' @return returns a Seruat object that is normalised, has information on linear and
 #' non-linear dimensional reductions (PCA, UMAP, TSNE) and is clustered at different
 #' resolutions.
@@ -33,13 +39,31 @@ seurat_proc <- function(seur_obj,
                         ),
                         select_genes = rownames(seur_obj),
                         elbow_dims = 50,
-                        tsne = TRUE) {
+                        tsne = TRUE,
+                        dir_lab = "all_celltypes",
+                        save_dir = getwd(),
+                        plotheight = 5,
+                        plotwidth = 5) {
   seur_obj <- Seurat::NormalizeData(seur_obj)
   seur_obj <- Seurat::FindVariableFeatures(seur_obj)
   scale_genes <- select_genes
   seur_obj <- Seurat::ScaleData(seur_obj, features = scale_genes)
   seur_obj <- Seurat::RunPCA(seur_obj, features = VariableFeatures(object = seur_obj))
-  print(Seurat::ElbowPlot(seur_obj, ndims = elbow_dims))
+  e_plot <- Seurat::ElbowPlot(seur_obj, ndims = elbow_dims) +
+                                  geom_vline(xintercept =  n_pcs,
+                                             color = "red", size=0.5)
+  print(e_plot)
+
+  save_plot_path <- paste0(save_dir, "/outs/", dir_lab, "/plots/elbow_plot")
+  if(dir.exists(save_plot_path) == FALSE){
+    dir.create(save_plot_path, recursive = TRUE)
+  }
+
+  pdf(paste0(save_plot_path, "/elbow.pdf"),
+      height=plotheight, width = plotwidth)
+  print(e_plot)
+  dev.off()
+
   seur_obj <- Seurat::FindNeighbors(seur_obj, dims = 1:n_pcs)
   seur_obj <- Seurat::FindClusters(seur_obj, resolution = res)
   seur_obj <- Seurat::RunUMAP(seur_obj, dims = 1:n_pcs)

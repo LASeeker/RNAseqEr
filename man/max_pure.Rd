@@ -5,21 +5,26 @@
 \title{max_pure}
 \usage{
 max_pure(
-  save_path = paste0(getwd(), "/outs/all_celltypes/tables/cluster_purity_data"),
-  exponent = 22,
-  pure_thres = 0.99
+  dir_lab = "all_celltypes",
+  save_dir = getwd(),
+  weight_factor = 22,
+  pure_thres = 0.96,
+  second_thres = 1
 )
 }
 \arguments{
-\item{save_path}{path to where cluster purity measures are saved as
+\item{save_dir}{path to main working directory. Use the same folder as for
+running cluster_purity.R and the function will find the appropriate files.
 .csv files. Default is "getwd()/outs/all_celltypes/tables/cluster_purity_data".}
 
-\item{exponent}{this is used to weigh the cluster purity measure. A quotient of
-cluster purity ^ exponent / cluster count is used to calculate an overall pure
+\item{weight_factor}{this is used to weigh the cluster purity measure. A quotient of
+cluster purity * weight_factor / cluster count is used to calculate an overall pure
 measure.}
 
 \item{pure_thres}{Threshold of cluster purity to be used. The function is looking
 for the maximum number of clusters over this purity threshold.}
+
+\item{second_thres}{threshold of the calculated pure measure. Default is 1.}
 }
 \value{
 A recommendation of a clustering resolution that maximizes cluster purity and
@@ -36,7 +41,7 @@ dir.create(save_dir_cr, recursive = TRUE)
 
 cns <- seurat_proc(cns, tsne = FALSE)
 clu_pure(cns, save_dir = save_dir_cr)
-keep_res <- max_pure(cns, save_dir = save_dir_cr)
+keep_res <- max_pure(save_dir = save_dir_cr)
 
 
 }

@@ -29,7 +29,7 @@
 #'
 #' @examples
 #' seur_obj <- cluster_qc(cns,
-#'                    cluster_col = "Fine_cluster",
+#'                    cluster_col = "rough_annot",
 #'                    vars = c("caseNO", "process_number"))
 cluster_qc <- function(seur_obj,
                        vars,
@@ -41,8 +41,7 @@ cluster_qc <- function(seur_obj,
                        dir_lab = "all_celltypes",
                        width=8,
                        height= 5,
-                       scale = 15,
-                       propotion_thres = c(0.3, 0.2)
+                       scale = 15
                        ){
   # count how many cells there are in each group and cluster
   met_dat <- seur_obj@meta.data

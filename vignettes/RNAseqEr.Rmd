@@ -47,7 +47,7 @@ adapted ScType algorithm
 
 5) cluster quality control
 
-6) Identification of best cluster marker genes for validation
+6) Identification of best cluster marker genes for validation (THIS NEEDS SOME MORE THOUGHT)
 
 7) differential abundance with variables of interest
 
@@ -57,9 +57,14 @@ adapted ScType algorithm
 9) gene ontology based on cluster and condition markers
 
 
-The processed Seurat objects are saved together with a report on the analysis that
-helps understanding what has been done and where results are saved. 
-Additional analyses can be added using the processed Seurat objects. 
+10) Building of a shiny app
+
+11) writing of a summary report that describes what has been done, what the 
+results are and where to find them. 
+
+
+The processed Seurat objects are saved which enables the addition of other 
+taylored analyses. 
 
 All results should be thoroughly checked and manually corrected if necessary.
 
@@ -443,12 +448,12 @@ within cell lineage or clusterwise for genes that are differentially expressed.
 
 
 ```{r}
-find_cond_markers(seur,
+
+RNAseqEr::find_cond_markers(seur,
                   int_cols = c("AgeGroup","Tissue", "gender"),
                   cluster_id = "cluster_id",
                   dir_lab = "Oligodendrocytes")
             
-
 
 ```
 
@@ -482,12 +487,13 @@ save_vln(cns,
          group_by = "rough_annot",
          plotheight = 50)
 
-here()
+
 
 ```
 
 The same is also possible to perform on the overall differential gene expression
 analsis from above by pointing at the corresponding folder.
+
 ```{r, plot.width = 8, plot.height = 30}
 cond_genes_ov <- gen_mark_list(file_dir = here("outs", 
                                             "all_celltypes", 
@@ -532,9 +538,37 @@ save_feat_plots(cns,
 
 
 ```
-Next steps:
-- volcano plots
-- run clustering for all
+
+# Gene ontology analysis
+
+It may also be useful to check whether there are certain pathways differentially 
+regulated in certain clusters or with a certain condition. There are many 
+tools available for gene ontology or gene set enrichment analyses and even more
+ways to visualise the results. We use ClusterProfiler below and generate an output 
+that can be easily plotted and saved as wished. 
+
+Please note that the usage below is just for the purpose of demonstrating the 
+function. When you use the function for your purposes, make sure to filter 
+your list of genes so that you retain only thoset that are significantly upregulated
+in your grou of interest. Run the function one time each for each condition/
+cluster.
+
+```{r}
+go_results <- perform_go(cns,
+                         gene_list = tissue_mark,
+                         min_log2FC = 0.25,
+                         reverse = FALSE,
+                         translate_gene_id_from = "SYMBOL",
+                         translate_gene_id_to = "ENTREZID",
+                         org_use = "org.Hs.eg.db",
+                         ontology = "BP",
+                         pvalue_cutoff = 0.05,
+                         qvalue_cutoff = 0.05,
+                         read_able = TRUE)
+
+dotplot(go_results)
+
+```
 
 # Session Info
 

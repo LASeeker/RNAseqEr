@@ -46,7 +46,9 @@ plot_list <- function(seur_obj,
       "/outs/",
       dir_lab,
       "/plots/resolution_plots/"))
+  if(dir.exists(save_dir_path) == FALSE){
   dir.create(save_dir_path, recursive = TRUE)
+  }
 
   plot_l <- list()
   for (i in 1:length(res_names)) {

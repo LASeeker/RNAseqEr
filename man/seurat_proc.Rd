@@ -10,7 +10,11 @@ seurat_proc(
   res = c(0.005, 0.01, 0.04, 0.05, seq(from = 0.1, to = 1, by = 0.1)),
   select_genes = rownames(seur_obj),
   elbow_dims = 50,
-  tsne = TRUE
+  tsne = TRUE,
+  dir_lab = "all_celltypes",
+  save_dir = getwd(),
+  plotheight = 5,
+  plotwidth = 5
 )
 }
 \arguments{
@@ -30,6 +34,16 @@ determine n_pcs}
 
 \item{tsne}{TRUE/FALSE, default is true which means TSNE dim reduction is
 performed additionally to UMAP}
+
+\item{dir_lab}{label that indicated cell lineage to structure output. The
+default is "all_celltypes"}
+
+\item{save_dir}{directory where the output should be saved. Default is the
+current working directory.}
+
+\item{plotheight}{height of elbow plot output. Default is 5.}
+
+\item{plotwidth}{width of elbow plot output. Default is 5.}
 }
 \value{
 returns a Seruat object that is normalised, has information on linear and

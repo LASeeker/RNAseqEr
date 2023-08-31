@@ -32,11 +32,13 @@ Imports:
     miloR,
     scater,
     statmod,
-    patchwork
-ImportFrom:   
-    grDevices dev.off pdf png,
-    utils combn head read.csv tail write.csv,
-    stats as.formula dist quantile
+    patchwork,
+    grDevices,
+    stats,
+    utils,
+    shinyhelper,
+    DT,
+    ggdendro
 Suggests: 
     knitr,
     rmarkdown,

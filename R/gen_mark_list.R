@@ -17,6 +17,10 @@
 #' tested. Default is FALSE, so it is assumed that cluster markers are being
 #' tested. TRUE enables the test of different conditions such as age, sex,
 #' condition and treatment group separately.
+#' @param test_cond FALSE by default possible to set to conditions of interest
+#' that for which marker gene lists should be compiled. The conditions have to
+#' appear in the Differential gene expression results that are used here as input
+#' for example c("AgeGroup", "Tissue")
 #' @import Seurat dplyr here
 #'
 #' @return filtered data frame of potential cluster marker genes with n_top candidate

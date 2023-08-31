@@ -18,6 +18,8 @@
 #' current working directory
 #' @param test_use statistical approach being used for differential gene expression
 #' analysis. Default is MAST.
+#' @param dir_lab specifies which cell lineage is investigated which is important for
+#' output folder structure. The default is "all_celltypes".
 #'
 #' @return saves lists of differentially expressed genes between clusters of
 #' interest to output folders once filtered once unfiltered.
@@ -39,7 +41,8 @@ int_res_all_mark <- function(seur_obj,
                              fil_pct_1 = 0.25,
                              fil_pct_2 = 0.6,
                              save_dir = getwd(),
-                             test_use = "MAST") {
+                             test_use = "MAST",
+                             dir_lab = "all_celltypes") {
   for (i in 1:length(int_cols)) {
     Idents(seur_obj) <- int_cols[i]
     if(length(levels(Idents(seur_obj))) > 1){
@@ -56,9 +59,19 @@ int_res_all_mark <- function(seur_obj,
           all_mark$pct.2 < fil_pct_2
       )
 
+      save_path <- paste0(save_dir,
+                          "/outs/",
+                          dir_lab,
+                          "/tables/cluster_marker/overall"
+                          )
 
-      write.csv(all_mark, paste(save_dir, "/all_mark", int_cols[i], ".csv", sep = ""))
-      write.csv(fil_mark, paste(save_dir, "/fil_mark", int_cols[i], ".csv", sep = ""))
+      if(dir.exists(save_path) == FALSE){
+        dir.create(save_path, recursive = TRUE)
+      }
+
+
+      write.csv(all_mark, paste(save_path, "/all_mark", int_cols[i], ".csv", sep = ""))
+      write.csv(fil_mark, paste(save_path, "/fil_mark", int_cols[i], ".csv", sep = ""))
     }
   }
 }

@@ -49,13 +49,17 @@ clu_pure <- function(seur_obj,
                          "/outs/",
                          dir_lab,
                          "/tables/cluster_purity_data/")
-  dir.create(clu_pure_dir, recursive = TRUE)
+  if(dir.exists(clu_pure_dir) == FALSE){
+    dir.create(clu_pure_dir, recursive = TRUE)
+  }
 
   clu_pure_plot_dir <- paste0(save_dir,
                          "/outs/",
                          dir_lab,
                          "/plots/cluster_purity_plots/")
-  dir.create(clu_pure_plot_dir, recursive = TRUE)
+  if(dir.exists(clu_pure_plot_dir) == FALSE){
+    dir.create(clu_pure_plot_dir, recursive = TRUE)
+  }
 
   for(i in 1: length(names_col)){
     clust <- met_dat[[names_col[i]]]
