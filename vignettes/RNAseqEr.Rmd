@@ -68,7 +68,15 @@ taylored analyses.
 
 All results should be thoroughly checked and manually corrected if necessary.
 
+# Installation
 
+```{r}
+install_github("LASeeker/RNAseqEr")
+
+```
+
+
+# Load libraries
 
 ```{r setup}
 library(RNAseqEr)
@@ -78,7 +86,10 @@ library(miloR)
 library(SingleCellExperiment)
 library(MAST)
 library(dplyr)
+library(CHOIR)
 ```
+
+# Test with provided test dataset or own data
 
 The package comes with a dataset from the human CNS (Seeker et al. 2023) that 
 includes different cell types from different CNS regions and different donor 
@@ -140,6 +151,8 @@ plot_list(cns, save_dir = "../")
 
 ## Calculate cluster purity at different resolutions
 
+### RNAseqEr approach based on purity measures
+
 The intention above was to create clustering from a too low to a too high resolution. 
 But which one is appropriate? This depends in this work for on if you have a 
 very homogeneous cell population or a mix of different cell types (which is the
@@ -155,10 +168,26 @@ clu_pure(cns, save_dir = "../")
 ```
 
 ```{r, RNAseqErh = 8, fig.height = 5}
-keep_res <- max_pure(save_path = here("outs", "all_celltypes","tables", "cluster_purity_data"))
+keep_res <- max_pure(save_dir = "../", dir_lab = "all_celltypes")
 
 DimPlot(cns, group.by = keep_res, cols = colour_palette())
 
+```
+
+### Using CHOIR
+A recent publication by Sant et al. proposes 
+
+Sant, C., Mucke, L. & Corces, M.R. CHOIR improves significance-based detection of cell types and states from single-cell data. Nat Genet (2025). https://doi.org/10.1038/s41588-025-02148-8
+
+```{r}
+cns_choir <- CHOIR(cns)
+cns_choir <- runCHOIRumap(cns_choir,
+                       reduction = "P0_reduction")
+
+plotCHOIR(cns_choir)    
+plotCHOIR(cns_choir,
+          accuracy_scores = TRUE,
+          plot_nearest = FALSE)
 ```
 
 ## Cell type annotation
@@ -184,7 +213,7 @@ TO DO ADD OVERALL DOTPLOT!
 
 ```{r, fig.width = 8, fig.height = 5, echo = FALSE, results = 'hide', fig.keep = 'all',}
 here("..")
-cns <- annotate_seqEr(cns, ident_use = keep_res)
+cns <- annotate_seqEr(cns, ident_use = keep_res, tissue_ref = "Brain")
 
 ```
 

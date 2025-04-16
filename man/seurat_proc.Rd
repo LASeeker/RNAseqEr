@@ -14,7 +14,8 @@ seurat_proc(
   dir_lab = "all_celltypes",
   save_dir = getwd(),
   plotheight = 5,
-  plotwidth = 5
+  plotwidth = 5,
+  sketch = FALSE
 )
 }
 \arguments{
@@ -44,16 +45,26 @@ current working directory.}
 \item{plotheight}{height of elbow plot output. Default is 5.}
 
 \item{plotwidth}{width of elbow plot output. Default is 5.}
+
+\item{sketch}{whether data should be sketched (see Seurat documentation), useful
+for very large datasets. Default is FALSE.}
+
+\item{sketch_ncells}{number of cells used for sketched dataset. Default is 50000}
+
+\item{sketch_method}{method used for sketching. Default is "LeverageScore", 
+alternative is "Uniform".}
+
+\item{sketched_assay_name}{name of sketched assay output, Default is "sketch".}
 }
 \value{
-returns a Seruat object that is normalised, has information on linear and
+returns a Seeurat object that is normalised, has information on linear and
 non-linear dimensional reductions (PCA, UMAP, TSNE) and is clustered at different
 resolutions.
 }
 \description{
 This function performs the standard Seurat processing on a quality
-controlled Seurat object an returns a Seruat object with added dimensional reduction
-and clustering at multiple resolutions.
+controlled Seurat object an returns a Seurat object with added dimensional reduction
+and clustering at multiple resolutions. Now works for sketched data, too.
 }
 \examples{
 library(Seurat)

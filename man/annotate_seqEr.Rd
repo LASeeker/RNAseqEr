@@ -14,17 +14,18 @@ annotate_seqEr(
   assay_use = "RNA",
   save_dir = getwd(),
   dir_lab = "all_celltypes",
-  custom_ref_genes = FALSE,
-  custom_gene_list,
+  custom_ref_genes = TRUE,
+  custom_gene_list =
+    "https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/ScTypeDB_short.xlsx",
   customclassif = "ScType_annotation",
   plot_reduction = "umap",
   plot_label = TRUE,
   plot_repel = TRUE,
   plot_width = 8,
   plot_height = 8,
-  dge_present = FALSE,
   dge = TRUE,
   proportion = 3,
+  unknown_threshold = 0.25,
   colours = colour_palette()
 )
 }
@@ -76,10 +77,6 @@ be repelled on DimPlots. Default is TRUE.}
 
 \item{plot_height}{height of DimPlot in output file. Default = 8.}
 
-\item{dge_present}{TRUE/FALSE if previously generated DGE results are present.
-Should be set to FALSE at each new tested ident_use for the first time, but
-can be set to TRUE thereafter to speed up process.}
-
 \item{dge}{TURE/FALSE whether differential gene expression should be performed.
 Default is TRUE, to allow for annotation of celltypes that were not annotated
 based on scType alone.}
@@ -92,6 +89,10 @@ decreasing it makes it more stringent.}
 
 \item{colours}{Colours for DimPlots. Default is colour_pelette() from The RNAseqEr
 library}
+
+\item{dge_present}{TRUE/FALSE if previously generated DGE results are present.
+Should be set to FALSE at each new tested ident_use for the first time, but
+can be set to TRUE thereafter to speed up process.}
 }
 \value{
 Seurat object with added ScType and RNAseqEr annotation

@@ -31,8 +31,8 @@ A recommendation of a clustering resolution that maximizes cluster purity and
 cluster number and saves summary table to new folder within read_dir.
 }
 \description{
-This function uses cluster purity measurements at different resoution and looks
-for a resolution suitable for a rough celltype annotattion.
+This function uses cluster purity measurements at different resolutions and looks
+for a resolution suitable for a rough cell type annotation.
 }
 \examples{
 library(here)

@@ -1,7 +1,7 @@
 #' max_pure
 #' @description
-#' This function uses cluster purity measurements at different resoution and looks
-#' for a resolution suitable for a rough celltype annotattion.
+#' This function uses cluster purity measurements at different resolutions and looks
+#' for a resolution suitable for a rough cell type annotation.
 #'
 #' @param save_dir path to main working directory. Use the same folder as for
 #' running cluster_purity.R and the function will find the appropriate files.
