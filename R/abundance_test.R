@@ -84,21 +84,26 @@ abundance_test <- function(seur_obj,
                            plot_alpha = 0.1,
                            save_dir = getwd(),
                            dir_lab = "all_celltypes",
-                           height = 5,
+                           height = 6,
                            width = 8,
                            beeswarm_colour = c("red", "blue", "grey")
                            ){
   milo_meta <- seur_obj@meta.data
+  
+  print("Generating Milo object.")
   milo_obj <- Milo(as.SingleCellExperiment(seur_obj))
 
+  print("Building graph.")
   milo_obj <- buildGraph(milo_obj,
                          k = k,
                          d = d,
                          reduced.dim = reduced_dim)
 
+  print("Make Neighborhoods.")
   milo_obj <- makeNhoods(milo_obj, k = k, d = d, refined = refined, prop = prop,
                          reduced_dims = reduced_dim)
 
+  print("Plot Neighborhood Sizes.")
   milo_plot <- plotNhoodSizeHist(milo_obj) +
     geom_vline(xintercept = 50, linetype="dotted",
                color = "blue", linewidth=1.5) +
@@ -111,20 +116,25 @@ abundance_test <- function(seur_obj,
                           "/outs/",
                           dir_lab,
                           "/plots/miloR")
+  
+  print("Plot saved to file")
   if(dir.exists(milo_dir_plot) == FALSE){
     dir.create(milo_dir_plot, recursive = TRUE)
   }
 
 
+  print("Generating path for saving Milo table.")
   milo_dir_tab <- paste0(save_dir,
                          "/outs/",
                          dir_lab,
                          "/tables/miloR")
   if(dir.exists(milo_dir_tab) == FALSE){
+    print("Initializing new directory to save output table.")
     dir.create(milo_dir_tab, recursive = TRUE)
   }
 
 
+  print("Initializing new directory to save Milo data.")
   milo_dir_dat <- paste0(save_dir,
                          "/outs/",
                          dir_lab,
@@ -139,9 +149,12 @@ abundance_test <- function(seur_obj,
 
   dev.off()
 
-
+  print("PDF saved.")
+  
+  print("Counting cells.")
   milo_obj <- countCells(milo_obj, samples = sample_id, meta.data = milo_meta)
 
+  print("Creating Milo design.")
   milo_design <- data.frame(colData(milo_obj)[, cols_interest])
 
 
@@ -149,18 +162,24 @@ abundance_test <- function(seur_obj,
   milo_design <- distinct(milo_design)
   rownames(milo_design) <- milo_design[[sample_id]] # that does not work. needed??
 
+  print("Calculate neighborhood distance.")
   milo_obj <- calcNhoodDistance(milo_obj, d = d, reduced.dim = reduced_dim)
 
   write.csv(milo_design, paste0(milo_dir_tab, "milo_design_df.csv"))
+  print("Saved Milo design as csv file.")
 
 
   #Testing
+  print("Testing started.")
   for(i in 1: length(test_factors)){
+    
     curr_fact <- test_factors[i]
+    print(paste0("Processing: ", curr_fact))
 
     if(length(levels(as.factor(milo_meta[[curr_fact]]))) == 2){
 
       if(account_for != FALSE){
+        print("Generating da results while accounting for factors.")
         da_results <- testNhoods(milo_obj, design = as.formula(paste0("~ ",
                                                                       account_for,
                                                                       curr_fact)),
@@ -168,12 +187,15 @@ abundance_test <- function(seur_obj,
 
       }else{
 
-      da_results <- testNhoods(milo_obj, design = as.formula(paste0("~ ",
+        print("Generating da results while not accounting for factors.")
+        da_results <- testNhoods(milo_obj, design = as.formula(paste0("~ ",
                                                                     curr_fact)),
                                design.df = milo_design)
+        print("DA results generated.")
       }
 
       print(head(da_results))
+      print("Printed da results.")
       da_results %>%
         arrange(SpatialFDR) %>%
         head()
@@ -190,6 +212,7 @@ abundance_test <- function(seur_obj,
       plot(qc_plot)
 
       dev.off()
+      print("Saved Milo plot 1.")
 
       qc_plot2 <- ggplot(da_results, aes(logFC, -log10(SpatialFDR))) +
         geom_point() +
@@ -205,6 +228,7 @@ abundance_test <- function(seur_obj,
       plot(qc_plot)
 
       dev.off()
+      print("Saved Milo plot 2.")
 
       milo_obj <- buildNhoodGraph(milo_obj)
 
@@ -234,6 +258,7 @@ abundance_test <- function(seur_obj,
       plot(save_plot)
 
       dev.off()
+      print("Saved Milo plot 3.")
 
 
       da_results <- annotateNhoods(milo_obj,
@@ -274,6 +299,7 @@ abundance_test <- function(seur_obj,
       plot(beeswarm)
 
       dev.off()
+      print("Saved Milo plot 4.")
 
 
 
@@ -282,10 +308,12 @@ abundance_test <- function(seur_obj,
 
 
       write.csv(da_results, paste0(milo_dir_tab, "/diff_abund_", curr_fact, ".csv"))
+      print("Saved da_results.")
 
 
     } else if(length(levels(as.factor(milo_meta[[curr_fact]]))) > 2){
       # do all pairwise comparisons
+      print("Processing factors with more than 2 levels.")
       all_levels <- levels(as.factor(milo_meta[[curr_fact]]))
       all_comb <- combn(all_levels, 2)
 
@@ -355,6 +383,7 @@ abundance_test <- function(seur_obj,
         plot(save_plot)
 
         dev.off()
+        print("Saved Milo plot multilevel 1.")
 
         da_results <- annotateNhoods(milo_obj,
                                      da_results,
@@ -397,6 +426,7 @@ abundance_test <- function(seur_obj,
         plot(beeswarm)
 
         dev.off()
+        print("Saved Milo plot multilevel 2")
 
 
         write.csv(da_results, paste0(milo_dir_tab,

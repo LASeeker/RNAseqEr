@@ -15,7 +15,10 @@ seurat_proc(
   save_dir = getwd(),
   plotheight = 5,
   plotwidth = 5,
-  sketch = FALSE
+  sketch = FALSE,
+  sketch_ncells = 50000,
+  sketch_method = c("LeverageScore", "Uniform"),
+  sketched_assay_name = "sketch"
 )
 }
 \arguments{

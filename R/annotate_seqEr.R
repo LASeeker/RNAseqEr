@@ -86,14 +86,35 @@ annotate_seqEr <- function(seur_obj,
                            proportion = 3,
                            unknown_threshold = 0.25, # New parameter for controlling what's considered "Unknown"
                            colours = colour_palette()) {
+  # Check if ident_use exists in metadata
+  if (!(ident_use %in% colnames(seur_obj@meta.data))) {
+    stop(paste0("Error: '", ident_use, "' not found in the metadata of the Seurat object. ",
+                "Available columns are: ", paste(colnames(seur_obj@meta.data), collapse = ", ")))
+  }
+  
+  # Also check if the column contains any data
+  if (length(unique(seur_obj@meta.data[[ident_use]])) == 0) {
+    stop(paste0("Error: '", ident_use, "' column exists but contains no data or only NA values."))
+  }
+  
+  if (!assay_use %in% Assays(seur_obj)) {
+    stop(paste0("Error: Assay '", assay_use, "' not found in Seurat object. ",
+                "Available assays are: ", paste(Assays(seur_obj), collapse = ", ")))
+  }
+  
+  if (ncol(seur_obj[[assay_use]]@scale.data) == 0) {
+    stop(paste0("Error: No scaled data found in the '", assay_use, "' assay. ",
+                "Please run ScaleData() before using this function."))
+  }
+  
   
   # Load required ScType functions
   source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/gene_sets_prepare.R")
   source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/sctype_score_.R")
   
   # Create directories for output
-  dim_plot_dir <- paste0(save_dir, "/outs/", dir_lab, "/plots/ScType_Annotated_plot")
-  marker_dir <- paste0(save_dir, "/outs/", dir_lab, "/tables/DGE/broad_celltype_markers")
+  dim_plot_dir <- paste0(save_dir, "outs/", dir_lab, "/plots/ScType_Annotated_plot")
+  marker_dir <- paste0(save_dir, "outs/", dir_lab, "/tables/DGE/broad_celltype_markers")
   
   if (!dir.exists(dim_plot_dir)) {
     dir.create(dim_plot_dir, recursive = TRUE)
@@ -281,8 +302,13 @@ annotate_seqEr <- function(seur_obj,
     print(p2)
     dev.off()
   }
-  
+  print(p1)
+  print(p3)
+  print(p2)
   return(seur_obj)
+  
 }
-
+    
+    
+    
 

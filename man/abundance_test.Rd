@@ -22,7 +22,7 @@ abundance_test(
   plot_alpha = 0.1,
   save_dir = getwd(),
   dir_lab = "all_celltypes",
-  height = 5,
+  height = 6,
   width = 8,
   beeswarm_colour = c("red", "blue", "grey")
 )

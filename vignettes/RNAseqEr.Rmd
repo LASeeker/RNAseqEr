@@ -70,7 +70,7 @@ All results should be thoroughly checked and manually corrected if necessary.
 
 # Installation
 
-```{r}
+```{r, eval = FALSE}
 install_github("LASeeker/RNAseqEr")
 
 ```
@@ -179,7 +179,7 @@ A recent publication by Sant et al. proposes
 
 Sant, C., Mucke, L. & Corces, M.R. CHOIR improves significance-based detection of cell types and states from single-cell data. Nat Genet (2025). https://doi.org/10.1038/s41588-025-02148-8
 
-```{r}
+```{r, eval = FALSE}
 cns_choir <- CHOIR(cns)
 cns_choir <- runCHOIRumap(cns_choir,
                        reduction = "P0_reduction")
@@ -213,7 +213,12 @@ TO DO ADD OVERALL DOTPLOT!
 
 ```{r, fig.width = 8, fig.height = 5, echo = FALSE, results = 'hide', fig.keep = 'all',}
 here("..")
-cns <- annotate_seqEr(cns, ident_use = keep_res, tissue_ref = "Brain")
+cns <- annotate_seqEr(cns, ident_use = keep_res, tissue_ref = "Brain",
+                      save_dir = "../")
+
+
+cns <- annotate_seqEr(cns, ident_use = "RNA_snn_res.0.8", tissue_ref = "Brain",
+                      save_dir = "../")
 
 ```
 
@@ -281,7 +286,7 @@ All other cluster resolutions may make sense, so how to pick a suitable one? Our
 approach is to decide in by looking at the results of differential gene expression 
 analyses to see whether or not we can identify markers for most clusters. Why
 most and not all? We noticed that in many datasets, one cluster seems to be the 
-"average" that does express al the cell lineage markers but nothing special over 
+"average" that does express all the cell lineage markers but nothing special over 
 and above. It may be reasonable to keep a clustering resolution where a cluster
 is negative for markers that characterise other clusters.
 
@@ -290,30 +295,25 @@ So all potentially interesting resolutions can be used below:
 ```{r}
 
 # Pick interesting resolutions
-int_resol <- c(0.2, 0.3, 0.6, 0.8, 0.9)
+int_resol <- c(0.1, 0.2, 0.3, 1, 1.3)
 int_res <- paste0("RNA_snn_res.", int_resol)
-
-#create an output folder
-dge_dir <- here("outs", "Oligodendrocytes", "tables", "DGE", "DGE_diff_resol")
 
 ```
 
 
 ```{r, eval = FALSE}
-if(dir.exists(dge_dir) == FALSE){
-  dir.create(dge_dir, recursive = TRUE)
-}
             
 all_res_mark <- int_res_all_mark(seur_obj = seur,
                                  int_cols = int_res,
-                                 save_dir = dge_dir)
+                                 save_dir = save_dir,
+                                 dir_lab = "Oligodendrocytes")
 
 ```
 
 
 ```{r}
 # see the output 
-list.files(dge_dir)
+list.files(here("outs", "Oligodendrocytes", "tables", "cluster_marker", "overall"))
 ```
 
 The function above generates two outputs for each resolution, one set for unfiltered ("all")
@@ -321,20 +321,15 @@ and one for further filtered ("fil") values that can be tweaked in the function 
 
 We also add a pairwise comparison of clusters:
 
-```{r}
-dge_pw_dir <- here("outs", "Oligodendrocytes", "tables", "DGE", "DGE_pairwise")
-
-```
 
 
 ```{r, eval = FALSE}
 
-dir.create(dge_pw_dir)
-
-pw_mark <- pairwise_dge(seur_obj = seur,
-                        int_cols = int_res,
-                        save_dir = dge_pw_dir)
-head(pw_mark)
+pairwise_dge(seur_obj = seur,
+             int_cols = int_res,
+             save_dir = save_dir,
+             dir_lab = "Oligodendrocytes")
+list.files(here("outs", "Oligodendrocytes", "tables", "cluster_marker", "pairwise"))
 ```
 
 
@@ -342,7 +337,7 @@ Above we generates a whole lot of output that nobody wants to comb through
 manually. So below we are going to read in all the results and summarise them
 in a meaningful way. 
 
-The two functions below look into the results of the overall (fist) and pairwise
+The two functions below look into the results of the overall (first) and pairwise
 (second) differential gene expression analysis results and keeps the top n 
 markers (default n = 10) per cluster. 
 
@@ -352,9 +347,17 @@ are used to determine the similarity/ difference of clusters to find an appropri
 clustering resolution.
 
 ```{r}
-clu_mark <- gen_mark_list(file_dir = dge_dir)
+clu_mark <- gen_mark_list(file_dir = here("outs", 
+                                          "Oligodendrocytes", 
+                                          "tables", 
+                                          "cluster_marker", 
+                                          "overall"))
 
-clu_mark_pw <- gen_mark_list(file_dir = dge_pw_dir,
+clu_mark_pw <- gen_mark_list(file_dir = here("outs", 
+                                          "Oligodendrocytes", 
+                                          "tables", 
+                                          "cluster_marker", 
+                                          "pairwise"),
                              pairwise = TRUE)
 
 int_genes <- c(clu_mark$gene, clu_mark_pw$gene)
@@ -394,17 +397,24 @@ df_seqEr <- heatmap_seqEr(seur,
 ```
 
 To look at the cluster similarity scores, inspect the dataframe below. It shows that
-in this case the resolution 0.3 may be the most appropriate. More generally we use the 
-hoghest resolution with the lowest cluster similarity score (tail(x,1)).
+in this case the resolution 1 may be the most appropriate. More generally we use the 
+highest resolution with the lowest cluster similarity score (tail(x,1)).
 
 ```{r}
 df_seqEr
 ```
 
+The below only works if there was some over-clustering and there is indeed one cluster
+with a minimum cluster similarity score. Alternatively this can be determined manually.
 
-```{r}
+```{r, eval = FALSE}
 res_df <- subset(df_seqEr, df_seqEr$cluster_sim_score == min(df_seqEr$cluster_sim_score))
 keep_res <- tail(res_df$resolution,1)
+```
+
+```{r}
+keep_res <- "RNA_snn_res.1"
+
 ```
 
 
@@ -435,6 +445,7 @@ biased clustering.
 
 ```{r, fig.width = 8, fig.height = 5}
 seur <- cluster_qc(seur_obj = seur,
+                   save_dir = save_dir,
                    cluster_col = "cluster_id",
                    vars = c("process_number", "caseNO", "Tissue"),
                    dir_lab = "Oligodendrocytes")
@@ -457,12 +468,46 @@ milo_obj <- abundance_test(seur_obj = seur,
                            cluster_col = "cluster_id",
                            sample_id = "uniq_id",
                            cols_interest = c("uniq_id",
-                                             "Tissue",
-                                             "gender",
-                                             "AgeGroup",
-                                             "caseNO"),
-                           test_factors = c("Tissue", "gender", "AgeGroup"),
-                           dir_lab = "Oligodendrocytes")
+                                             #"Tissue",
+                                             #"gender",
+                                             "AgeGroup" #,
+                                             #"caseNO"
+                                             ),
+                           test_factors = c(#"Tissue", 
+                                            #"gender", 
+                                            "AgeGroup"),
+                           dir_lab = "Oligodendrocytes",
+                           k = 10,           # Reduced from 30
+                           d = 10,           # Reduced from 30
+                           prop = 0.1,       # Reduced from 0.2
+                           refined = FALSE  #
+                           )
+
+```
+Differential abundance testing makes more sense for larger datasets. Therefore,
+I am showing it below for the cns dataset containing all  cell types.
+
+```{r}
+milo_obj <- abundance_test(seur_obj = cns,
+                       cluster_col = "rough_annot",
+                       sample_id = "uniq_id",
+                       cols_interest = c("uniq_id",
+                                          #"Tissue",
+                                          #"gender",
+                                          "AgeGroup"#,
+                                          #"caseNO"
+                                          ),
+                      test_factors = c(#"Tissue", 
+                                       #"gender", 
+                                       "AgeGroup"
+                                       ),
+                      save_dir = "../",
+                           k = 10,           # Reduced from 30
+                           d = 10,           # Reduced from 30
+                           prop = 0.1,       # Reduced from 0.2
+                           refined = FALSE  #
+                      )
+
 
 ```
 
@@ -481,7 +526,21 @@ within cell lineage or clusterwise for genes that are differentially expressed.
 RNAseqEr::find_cond_markers(seur,
                   int_cols = c("AgeGroup","Tissue", "gender"),
                   cluster_id = "cluster_id",
-                  dir_lab = "Oligodendrocytes")
+                  dir_lab = "Oligodendrocytes",
+                  save_dir = "../")
+            
+
+```
+The subsetted oligodendrocyte dataset is very small to test for differentially 
+expressed genes. This is why we show the workflow downstream with the cns dataset.
+
+
+```{r}
+
+RNAseqEr::find_cond_markers(cns,
+                  int_cols = c("AgeGroup","Tissue", "gender"),
+                  cluster_id = "rough_annot",
+                  save_dir = "../")
             
 
 ```
@@ -497,7 +556,7 @@ cond_genes <- gen_mark_list(file_dir = here("outs",
                                             "rough_annot" , 
                                             "clusterwise"),
                             condition = TRUE,
-                            test_cond = c("AgeGroup", "Tissue"))
+                            test_cond = c("AgeGroup", "Tissue", "gender"))
 
 # Subset for the condition we would like to plot starting with age
 age_mark <- subset(cond_genes, 
@@ -507,6 +566,7 @@ age_mark <- subset(cond_genes,
 # removing suplicated gene names.
 
 age_mark <- age_mark[!duplicated(age_mark$gene),]
+head(age_mark)
 
 # Save vln plots to file
 save_vln(cns, 
@@ -514,14 +574,15 @@ save_vln(cns,
          save_label = "Age_mark",
          split_by = "AgeGroup",
          group_by = "rough_annot",
-         plotheight = 50)
+         plotheight = 50,
+         save_dir = "../")
 
 
 
 ```
 
 The same is also possible to perform on the overall differential gene expression
-analsis from above by pointing at the corresponding folder.
+analysis from above by pointing at the corresponding folder.
 
 ```{r, plot.width = 8, plot.height = 30}
 cond_genes_ov <- gen_mark_list(file_dir = here("outs", 
@@ -541,6 +602,7 @@ tissue_mark <- subset(cond_genes_ov,
 # removing suplicated gene names.
 
 tissue_mark <- tissue_mark[!duplicated(tissue_mark$gene),]
+head(tissue_mark)
 
 # Save vln plots to file
 save_vln(cns, 
@@ -548,14 +610,15 @@ save_vln(cns,
          save_label = "Tissue_mark",
          split_by = "Tissue",
          group_by = "rough_annot",
-         plotheight = 30)
+         plotheight = 30,
+         save_dir = "../")
 
 
 
 
 ```
-Similarly, Feature plots can be useful to look visualise differences in gene expression. 
-We can gene list above to visualise differences with a condition group such as tissue.
+Similarly, Feature plots can be useful to look visualize differences in gene expression. 
+We can gene list above to visualize differences with a condition group such as tissue.
 
 
 ```{r, plot.width = 8, plot.height = 30}
@@ -563,7 +626,8 @@ save_feat_plots(cns,
                 marker_list = tissue_mark$gene,
                 save_label = "Tissue_mark",
                 split_by = "Tissue",
-                plotheight = 30)
+                plotheight = 30,
+                save_dir = "../")
 
 
 ```
@@ -578,9 +642,9 @@ that can be easily plotted and saved as wished.
 
 Please note that the usage below is just for the purpose of demonstrating the 
 function. When you use the function for your purposes, make sure to filter 
-your list of genes so that you retain only thoset that are significantly upregulated
-in your grou of interest. Run the function one time each for each condition/
-cluster.
+your list of genes so that you retain only those that are significantly upregulated
+in your group of interest. Run the function for each condition/
+cluster. 
 
 ```{r}
 go_results <- perform_go(cns,
@@ -598,6 +662,43 @@ go_results <- perform_go(cns,
 dotplot(go_results)
 
 ```
+#Generation of a Shiny app
+
+```{r}
+create_shiny(cns,
+             shiny_name = "all_celltypes",
+             save_dir = "../",
+             read_file = FALSE,
+             default_1 = "AgeGroup",
+             default_2 = "Tissue",
+             assay_use = "RNA",
+             gex_slot = c("data", "scale.data", "counts"),
+             gene_mapping = FALSE,
+             default_gene1 = "MALAT1",
+             default_gene2 = "GAPDH",
+             default_multigene = NA,
+             default_dimred = c("umap1", "umap2"),
+             author = "My name",
+             title = "My data shows amazing results",
+             journal = "Best journal I could imaging",
+             volume  = "101",
+             page    = "101",
+             year    = "curren year",
+             doi     = "TBC",
+             link    = "TBC",
+             shiny_title = "My Single Cell Experiment")
+
+```
+
+This function will generate a directory called "shiny_app" in the provided save_dir. 
+In that directory is a script called ui.R. When this script is opened in R Studio, 
+an option to "Run App" will appear on the top right. When this is clicked, a website
+will be opened that can published to share data with collaborators (secret link) and/
+or the world. Several datasets can be visualized in the same shiny app as shown in 
+https://seeker-science.shinyapps.io/shiny_app_multi/ for example.
+More data visualization modes are available in the drop down menu of each dataset/
+cell type tab.
+
 
 # Session Info
 

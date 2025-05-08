@@ -72,6 +72,7 @@ create_shiny <- function(seur_obj,
                         link    = "TBC",
                         shiny_title = "My Shiny"
                         ){
+  prefix_list <- list()
 
   if(read_file == FALSE){
   scConf1 = createConfig(seur_obj,
@@ -98,6 +99,8 @@ create_shiny <- function(seur_obj,
                  default.dimred = default_dimred)
 
   file_names <- shiny_name
+  
+  prefix_list <- shiny_name
   }
 
   if(read_file == TRUE){
@@ -114,8 +117,6 @@ create_shiny <- function(seur_obj,
     file_path_2 <- paste(file_dir_2, file_names_2, sep = "/")
     file_path = c(file_path, file_path_2)
     }
-
-    prefix_list <- list()
 
     for(i in 1: length(file_names)){
       curr_seur <- readRDS(file_path[i])

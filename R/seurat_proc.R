@@ -50,34 +50,61 @@ seurat_proc <- function(seur_obj,
                         save_dir = getwd(),
                         plotheight = 5,
                         plotwidth = 5,
-                        sketch = FALSE) {
+                        sketch = FALSE,
+                        sketch_ncells = 50000,
+                        sketch_method = c("LeverageScore", "Uniform"),
+                        sketched_assay_name =  "sketch") {
+  out_dat_dir <- paste0(save_dir, "/data/processed_seurat/")
+  if(!dir.exists(out_dat_dir)){
+    dir.create(out_dat_dir, recursive = TRUE)
+  }
+  print("Normalising data.")
   seur_obj <- Seurat::NormalizeData(seur_obj)
+  print("Looking for variable genes.")
   seur_obj <- Seurat::FindVariableFeatures(seur_obj)
+  saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
+  print("Scaling data.")
   scale_genes <- select_genes
   seur_obj <- Seurat::ScaleData(seur_obj, features = scale_genes)
+  saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
   
   if(sketch == TRUE){
+    print("Sketching data.")
     seur_obj <- SketchData(
       object = seur_obj,
       ncells = sketch_ncells,
       method = sketch_method,
       sketched.assay = sketched_assay_name
     )
+    saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
     DefaultAssay(seur_obj) <- "sketch"
     # perform clustering workflow
+    print("Find variable features of sketched data.")
     seur_obj <- Seurat::FindVariableFeatures(seur_obj)
+    saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
+    print("Scale sketched data.")
     seur_obj <- Seurat::ScaleData(seur_obj)
+    print("Run PCA on sketched data.")
+    saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
     seur_obj <- Seurat::RunPCA(seur_obj, assay = "sketch", reduction.name = "pca.sketch")
+    print("Find nearest neighbors using sketched data.")
+    saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
     seur_obj <- Seurat::FindNeighbors(seur_obj, assay = "sketch", reduction = "pca.sketch", 
                               dims = 1:n_pcs)
+    saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
+    print("Find clusters using sketched data.")
     seur_obj <- Seurat::FindClusters(seur_obj, cluster.name = "seurat_cluster.sketched", 
                              resolution = res)
+    saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
+    print("Run UMAP using sketched data.")
     seur_obj <- Seurat::RunUMAP(seur_obj, reduction = "pca.sketch", 
                        reduction.name = "umap.sketch", return.model = T, 
                        dims = 1:n_pcs)
-    
+    saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
   }else{
+    print("Run PCA.")
     seur_obj <- Seurat::RunPCA(seur_obj, features = VariableFeatures(object = seur_obj))
+    saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
   }
     
   e_plot <- Seurat::ElbowPlot(seur_obj, ndims = elbow_dims) +
@@ -85,23 +112,34 @@ seurat_proc <- function(seur_obj,
                  color = "red", size=0.5)
   print(e_plot)
   save_plot_path <- paste0(save_dir, "/outs/", dir_lab, "/plots/elbow_plot")
+  
   if(dir.exists(save_plot_path) == FALSE){
     dir.create(save_plot_path, recursive = TRUE)
   }
+  
   pdf(paste0(save_plot_path, "/elbow.pdf"),
       height=plotheight, width = plotwidth)
   print(e_plot)
   dev.off()
   
   if(sketch == "FALSE"){
+    print("Find nearest neighbours.")
     seur_obj <- Seurat::FindNeighbors(seur_obj, dims = 1:n_pcs)
+    print("Find clusters.")
     seur_obj <- Seurat::FindClusters(seur_obj, resolution = res)
+    print("Run UMAP.")
     seur_obj <- Seurat::RunUMAP(seur_obj, dims = 1:n_pcs)
+    saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
     if (tsne == TRUE) {
+      print("Run TSNE")
       seur_obj <- Seurat::RunTSNE(seur_obj, dims = 1:n_pcs)
     }
+    saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
   }
+  saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
+  print("DONE")
   return(seur_obj)
+  
 }
 
 
