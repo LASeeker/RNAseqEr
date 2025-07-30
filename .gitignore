@@ -10,3 +10,5 @@ inst/doc
 vignettes/outs/
 outs
 shiny_app/
+vignettes/*_files/
+vignettesshiny_app/

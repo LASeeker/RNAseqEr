@@ -12,7 +12,10 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  cache = TRUE,  # Enable caching globally
+  fig.width = 8,
+  fig.height = 5
 )
 ```
 
@@ -113,7 +116,7 @@ present a function that automatically runs Seurat's standard normalisation,
 selection of variable genes, dimensional reduction and clustering at different 
 resolutions. 
 
-```{r, echo=FALSE, results='hide', fig.keep='all', fig.width= 8, fig.height=5}
+```{rseurat_processing, cache=TRUE, echo=FALSE, results='hide', fig.keep='all', fig.width= 8, fig.height=5}
 cns <- seurat_proc(cns)
 
 ```
