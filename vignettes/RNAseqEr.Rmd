@@ -89,7 +89,9 @@ library(miloR)
 library(SingleCellExperiment)
 library(MAST)
 library(dplyr)
-library(CHOIR)
+library(HGNChelper)  # Required for gene symbol checking
+library(openxlsx)    # Required for reading Excel files
+library(CHOIR)  # Optional package for advanced clustering
 ```
 
 # Test with provided test dataset or own data
@@ -116,7 +118,7 @@ present a function that automatically runs Seurat's standard normalisation,
 selection of variable genes, dimensional reduction and clustering at different 
 resolutions. 
 
-```{rseurat_processing, cache=TRUE, echo=FALSE, results='hide', fig.keep='all', fig.width= 8, fig.height=5}
+```{r seurat_processing, cache=TRUE, echo=FALSE, results='hide', fig.keep='all', fig.width= 8, fig.height=5}
 cns <- seurat_proc(cns)
 
 ```
@@ -304,11 +306,11 @@ int_res <- paste0("RNA_snn_res.", int_resol)
 ```
 
 
-```{r, eval = FALSE}
+```{r, eval = TRUE, echo = FALSE, results = 'hide'}
             
 all_res_mark <- int_res_all_mark(seur_obj = seur,
                                  int_cols = int_res,
-                                 save_dir = save_dir,
+                                 save_dir = "../",
                                  dir_lab = "Oligodendrocytes")
 
 ```
@@ -326,11 +328,11 @@ We also add a pairwise comparison of clusters:
 
 
 
-```{r, eval = FALSE}
+```{r, eval = TRUE, echo = FALSE, results = 'hide'}
 
 pairwise_dge(seur_obj = seur,
              int_cols = int_res,
-             save_dir = save_dir,
+             save_dir = "../",
              dir_lab = "Oligodendrocytes")
 list.files(here("outs", "Oligodendrocytes", "tables", "cluster_marker", "pairwise"))
 ```
@@ -350,18 +352,23 @@ are used to determine the similarity/ difference of clusters to find an appropri
 clustering resolution.
 
 ```{r}
-clu_mark <- gen_mark_list(file_dir = here("outs", 
-                                          "Oligodendrocytes", 
-                                          "tables", 
-                                          "cluster_marker", 
-                                          "overall"))
+# Check if files exist before trying to read them
+overall_dir <- here("outs", "Oligodendrocytes", "tables", "cluster_marker", "overall")
+pairwise_dir <- here("outs", "Oligodendrocytes", "tables", "cluster_marker", "pairwise")
 
-clu_mark_pw <- gen_mark_list(file_dir = here("outs", 
-                                          "Oligodendrocytes", 
-                                          "tables", 
-                                          "cluster_marker", 
-                                          "pairwise"),
-                             pairwise = TRUE)
+if(dir.exists(overall_dir) && length(list.files(overall_dir)) > 0) {
+  clu_mark <- gen_mark_list(file_dir = overall_dir)
+} else {
+  clu_mark <- data.frame(gene = character(), stringsAsFactors = FALSE)
+  cat("No overall marker files found. Using empty data frame.\n")
+}
+
+if(dir.exists(pairwise_dir) && length(list.files(pairwise_dir)) > 0) {
+  clu_mark_pw <- gen_mark_list(file_dir = pairwise_dir, pairwise = TRUE)
+} else {
+  clu_mark_pw <- data.frame(gene = character(), stringsAsFactors = FALSE)
+  cat("No pairwise marker files found. Using empty data frame.\n")
+}
 
 int_genes <- c(clu_mark$gene, clu_mark_pw$gene)
 int_genes <- unique(int_genes)
@@ -386,17 +393,21 @@ hm_dir <- here("outs",
                "plots",
                "heatmaps")
 
-
 dir.create(hm_dir, recursive = TRUE)
-        
 
-df_seqEr <- heatmap_seqEr(seur,
-              use_resol = FALSE,
-              col_names = int_res,
-              int_genes = int_genes,
-              save_dir = hm_dir,
-              max_diff_threshold = 10,
-              mean_diff_thres = 0.1)
+# Only run heatmap if we have genes to plot
+if(length(int_genes) > 0) {
+  df_seqEr <- heatmap_seqEr(seur,
+                use_resol = FALSE,
+                col_names = int_res,
+                int_genes = int_genes,
+                save_dir = hm_dir,
+                max_diff_threshold = 10,
+                mean_diff_thres = 0.1)
+} else {
+  df_seqEr <- data.frame(resolution = "No genes available", cluster_sim_score = 0)
+  cat("No genes available for heatmap analysis.\n")
+}
 ```
 
 To look at the cluster similarity scores, inspect the dataframe below. It shows that

@@ -40,7 +40,8 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    CHOIR
 Config/testthat/edition: 3
 License: MIT + file LICENSE
 URL: https://github.com/LASeeker/RNAseqEr

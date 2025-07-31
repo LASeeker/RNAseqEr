@@ -12,3 +12,10 @@ outs
 shiny_app/
 vignettes/*_files/
 vignettesshiny_app/
+..Rcheck/
+RNAseqEr_0.1.0.tar.gz
+data/processed_seurat/
+demo_output.Rmd
+demo_output.html
+vignettes/RNAseqEr_cache/
+vignettes/data/
