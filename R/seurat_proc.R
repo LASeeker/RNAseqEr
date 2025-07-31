@@ -70,14 +70,14 @@ seurat_proc <- function(seur_obj,
   
   if(sketch == TRUE){
     print("Sketching data.")
-    seur_obj <- SketchData(
+    seur_obj <- Seurat::SketchData(
       object = seur_obj,
       ncells = sketch_ncells,
       method = sketch_method,
       sketched.assay = sketched_assay_name
     )
     saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
-    DefaultAssay(seur_obj) <- "sketch"
+    Seurat::DefaultAssay(seur_obj) <- "sketch"
     # perform clustering workflow
     print("Find variable features of sketched data.")
     seur_obj <- Seurat::FindVariableFeatures(seur_obj)

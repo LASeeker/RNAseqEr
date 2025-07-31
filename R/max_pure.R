@@ -3,6 +3,7 @@
 #' This function uses cluster purity measurements at different resolutions and looks
 #' for a resolution suitable for a rough cell type annotation.
 #'
+#' @param dir_lab label used for which data is analysed. Default is "all_celltypes"
 #' @param save_dir path to main working directory. Use the same folder as for
 #' running cluster_purity.R and the function will find the appropriate files.
 #' .csv files. Default is "getwd()/outs/all_celltypes/tables/cluster_purity_data".

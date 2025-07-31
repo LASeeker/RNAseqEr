@@ -26,7 +26,6 @@ Imports:
     ggplot2,
     bluster,
     ggbeeswarm,
-    clustree,
     openxlsx,
     HGNChelper,
     miloR,
@@ -37,8 +36,7 @@ Imports:
     stats,
     utils,
     shinyhelper,
-    DT,
-    ggdendro
+    ShinyCell
 Suggests: 
     knitr,
     rmarkdown,

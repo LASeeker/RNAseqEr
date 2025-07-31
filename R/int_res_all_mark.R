@@ -18,6 +18,8 @@
 #' current working directory
 #' @param test_use statistical approach being used for differential gene expression
 #' analysis. Default is MAST.
+#' @param assay_use assay to use for differential gene expression analysis.
+#' Default is "RNA". For sketched data, use "sketch".
 #' @param dir_lab specifies which cell lineage is investigated which is important for
 #' output folder structure. The default is "all_celltypes".
 #'
@@ -42,6 +44,7 @@ int_res_all_mark <- function(seur_obj,
                              fil_pct_2 = 0.6,
                              save_dir = getwd(),
                              test_use = "MAST",
+                             assay_use = "RNA",
                              dir_lab = "all_celltypes") {
   for (i in 1:length(int_cols)) {
     Idents(seur_obj) <- int_cols[i]
@@ -51,6 +54,7 @@ int_res_all_mark <- function(seur_obj,
         min.pct = min_pct,
         logfc.threshold = logfc_threshold,
         test.use = test_use,
+        assay = assay_use,
         verbose = FALSE
       )
       fil_mark <- subset(

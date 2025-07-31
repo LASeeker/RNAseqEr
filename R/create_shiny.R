@@ -75,10 +75,10 @@ create_shiny <- function(seur_obj,
   prefix_list <- list()
 
   if(read_file == FALSE){
-  scConf1 = createConfig(seur_obj,
+  scConf1 = ShinyCell::createConfig(seur_obj,
                          meta.to.include = colnames(seur_obj@meta.data))
 
-  scConf1 = modDefault(scConf1, default1 = default_1 , default2 = default_2)
+  scConf1 = ShinyCell::modDefault(scConf1, default1 = default_1 , default2 = default_2)
 
   shiny_dir <- paste0(save_dir, "shiny_app/")
 
@@ -86,7 +86,7 @@ create_shiny <- function(seur_obj,
     dir.create(shiny_dir)
   }
 
-  makeShinyFiles(seur_obj,
+  ShinyCell::makeShinyFiles(seur_obj,
                  scConf1,
                  gex.assay = assay_use,
                  gex.slot = gex_slot,
@@ -127,10 +127,10 @@ create_shiny <- function(seur_obj,
       curr_name_save <- strsplit(curr_name, ".R")[[1]][1]
 
 
-      scConf1 = createConfig(curr_seur,
+      scConf1 = ShinyCell::createConfig(curr_seur,
                              meta.to.include = colnames(curr_seur@meta.data))
 
-      scConf1 = modDefault(scConf1, default1 = default_1 , default2 = default_2)
+      scConf1 = ShinyCell::modDefault(scConf1, default1 = default_1 , default2 = default_2)
 
       shiny_dir <- paste0(save_dir, "/shiny_app/")
 
@@ -138,7 +138,7 @@ create_shiny <- function(seur_obj,
         dir.create(shiny_dir)
       }
 
-      makeShinyFiles(curr_seur,
+      ShinyCell::makeShinyFiles(curr_seur,
                      scConf1,
                      gex.assay = assay_use,
                      gex.slot = gex_slot,
@@ -166,7 +166,7 @@ create_shiny <- function(seur_obj,
     doi     = doi,
     link    = link)
 
-  makeShinyCodesMulti(
+  ShinyCell::makeShinyCodesMulti(
     shiny.title = shiny_title,
     shiny.footnotes = citation,
     shiny.prefix = prefix_list,

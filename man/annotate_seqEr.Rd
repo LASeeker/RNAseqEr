@@ -87,12 +87,11 @@ larger than a third of the total number of genes that define a cell type in scTy
 be cosidered that cell type. Increasing the number makes annotation less stringent,
 decreasing it makes it more stringent.}
 
+\item{unknown_threshold}{threshold for what proportion of cells in a cluster
+should be "Unknown" before triggering additional annotation steps. Default is 0.25.}
+
 \item{colours}{Colours for DimPlots. Default is colour_pelette() from The RNAseqEr
 library}
-
-\item{dge_present}{TRUE/FALSE if previously generated DGE results are present.
-Should be set to FALSE at each new tested ident_use for the first time, but
-can be set to TRUE thereafter to speed up process.}
 }
 \value{
 Seurat object with added ScType and RNAseqEr annotation

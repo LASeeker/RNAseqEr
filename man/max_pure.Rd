@@ -13,6 +13,8 @@ max_pure(
 )
 }
 \arguments{
+\item{dir_lab}{label used for which data is analysed. Default is "all_celltypes"}
+
 \item{save_dir}{path to main working directory. Use the same folder as for
 running cluster_purity.R and the function will find the appropriate files.
 .csv files. Default is "getwd()/outs/all_celltypes/tables/cluster_purity_data".}

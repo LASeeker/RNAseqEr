@@ -197,10 +197,10 @@ abundance_test <- function(seur_obj,
       print(head(da_results))
       print("Printed da results.")
       da_results %>%
-        arrange(SpatialFDR) %>%
+        arrange(.data$SpatialFDR) %>%
         head()
 
-      qc_plot <- ggplot(da_results, aes(PValue)) + geom_histogram(bins=50) +
+      qc_plot <- ggplot(da_results, aes(.data$PValue)) + geom_histogram(bins=50) +
         ggtitle(curr_fact)
 
       print(qc_plot)
@@ -214,7 +214,7 @@ abundance_test <- function(seur_obj,
       dev.off()
       print("Saved Milo plot 1.")
 
-      qc_plot2 <- ggplot(da_results, aes(logFC, -log10(SpatialFDR))) +
+      qc_plot2 <- ggplot(da_results, aes(.data$logFC, -log10(.data$SpatialFDR))) +
         geom_point() +
         geom_hline(yintercept = 1)  +
         ggtitle(curr_fact)
@@ -330,12 +330,12 @@ abundance_test <- function(seur_obj,
                                                           all_comb[1,k]))
 
 
-        da_results %>%
-          arrange(SpatialFDR) %>%
-          head()
+              da_results %>%
+        arrange(.data$SpatialFDR) %>%
+        head()
 
 
-        ggplot(da_results, aes(PValue)) +
+        ggplot(da_results, aes(.data$PValue)) +
           geom_histogram(bins=50) +
           ggtitle(paste0(curr_fact,
                          " ",
@@ -343,7 +343,7 @@ abundance_test <- function(seur_obj,
                          " vs. ",
                          all_comb[1,k]))
 
-        ggplot(da_results, aes(logFC, -log10(SpatialFDR))) +
+        ggplot(da_results, aes(.data$logFC, -log10(.data$SpatialFDR))) +
           geom_point() +
           geom_hline(yintercept = 1) +
           ggtitle(paste0(curr_fact,

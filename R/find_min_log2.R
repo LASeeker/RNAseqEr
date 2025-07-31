@@ -23,6 +23,8 @@
 #' another.
 #' @param percentile cutoff for percentile. Default is set to 0.95. If set to 1
 #' it can be seen how large log2 fold changes can be if driven only by noise.
+#' @param assay_use assay to use for differential gene expression analysis.
+#' Default is "RNA". For sketched data, use "sketch".
 #'
 #' @return returns a value which represents the percentile of log2 fold changes
 #' that are driven by noise only.
@@ -39,7 +41,8 @@ find_min_log2 <- function(seur_obj,
                           logfc_threshold = 0.05,
                           only_pos = TRUE,
                           divisor = 2,
-                          percentile = 0.95) {
+                          percentile = 0.95,
+                          assay_use = "RNA") {
   my_list <- list()
   my_list_genes <- list()
   k <- 1
@@ -79,7 +82,8 @@ find_min_log2 <- function(seur_obj,
       ident.2 = "rep_2",
       test.use = test.to.use,
       logfc.threshold = logfc_threshold,
-      only.pos = only_pos
+      only.pos = only_pos,
+      assay = assay_use
     )
     if (nrow(mark) > 0) {
       perc <- quantile(mark$avg_log2FC, percentile)

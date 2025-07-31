@@ -35,9 +35,8 @@
 #' be repelled on DimPlots. Default is TRUE.
 #' @param plot_width width of DimPlot in output file. Default = 8.
 #' @param plot_height height of DimPlot in output file. Default = 8.
-#' @param dge_present TRUE/FALSE if previously generated DGE results are present.
-#' Should be set to FALSE at each new tested ident_use for the first time, but
-#' can be set to TRUE thereafter to speed up process.
+#' @param unknown_threshold threshold for what proportion of cells in a cluster
+#' should be "Unknown" before triggering additional annotation steps. Default is 0.25.
 #' @param dge TURE/FALSE whether differential gene expression should be performed.
 #' Default is TRUE, to allow for annotation of celltypes that were not annotated
 #' based on scType alone.

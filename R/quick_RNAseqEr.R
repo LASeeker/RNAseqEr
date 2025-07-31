@@ -1,4 +1,102 @@
-
+#' Quick RNAseqEr: Complete workflow for single-cell RNA-seq analysis
+#' @description
+#' This function runs the complete RNAseqEr workflow from Seurat processing to 
+#' final analysis including clustering, annotation, differential expression, 
+#' and Shiny app generation.
+#'
+#' @param seur_obj Seurat object to analyze
+#' @param n_pcs number of principal components for analysis
+#' @param res clustering resolutions to test
+#' @param select_genes genes to use for scaling
+#' @param elbow_dims dimensions for elbow plot
+#' @param tsne whether to run tSNE
+#' @param col_pattern pattern for clustering column names
+#' @param plot_cols colors for plots
+#' @param clust_lab whether to show cluster labels
+#' @param label_size size of labels
+#' @param save_dir directory to save results
+#' @param width plot width
+#' @param height plot height
+#' @param use_reduction dimensional reduction to use
+#' @param dir_lab label for output directory
+#' @param int_cols columns for differential expression analysis
+#' @param only_pos only positive markers
+#' @param min_pct minimum percentage of cells
+#' @param logfc_threshold log fold change threshold
+#' @param fil_pct_1 first percentage filter
+#' @param fil_pct_2 second percentage filter
+#' @param test_use statistical test to use
+#' @param int_cols_pw columns for pairwise analysis
+#' @param min_pct_pw minimum percentage for pairwise
+#' @param logfc_threshold_pw log fold change threshold for pairwise
+#' @param fil_pct_1_pw first percentage filter for pairwise
+#' @param fil_pct_2_pw second percentage filter for pairwise
+#' @param assay_use assay to use
+#' @param ad_pval adjusted p-value threshold
+#' @param avg_log average log fold change
+#' @param pct_1 first percentage
+#' @param pct_2 second percentage
+#' @param n_top number of top genes
+#' @param use_resol use resolution for heatmaps
+#' @param col_names column names for heatmaps
+#' @param col_pattern_hm pattern for heatmap columns
+#' @param label_hm label heatmaps
+#' @param draw_lines draw lines in heatmaps
+#' @param min_log2FC_go minimum log2 fold change for GO
+#' @param reverse_go reverse for GO analysis
+#' @param translate_gene_id_from gene ID format to translate from
+#' @param translate_gene_id_to gene ID format to translate to
+#' @param org_use organism database
+#' @param ontology GO ontology
+#' @param pvalue_cutoff_go p-value cutoff for GO
+#' @param qvalue_cutoff_go q-value cutoff for GO
+#' @param read_able readable gene names
+#' @param tissue_ref_annotation tissue reference for annotation
+#' @param min_pct_ann minimum percentage for annotation
+#' @param logfc_threshold_ann log fold change threshold for annotation
+#' @param assay_use_ann assay to use for annotation
+#' @param custom_ref_genes_ann use custom reference genes
+#' @param custom_gene_list custom gene list
+#' @param customclassif custom classification
+#' @param plot_reduction reduction for plotting
+#' @param plot_label_ann plot labels for annotation
+#' @param plot_repel_ann repel labels for annotation
+#' @param plot_width_ann plot width for annotation
+#' @param plot_height_ann plot height for annotation
+#' @param dge_present_ann DGE results present
+#' @param dge_ann perform DGE for annotation
+#' @param proportion proportion threshold
+#' @param cluster_qc_vars variables for cluster QC
+#' @param sample_id sample ID column
+#' @param cols_milo_design columns for Milo design
+#' @param milo_test_fact factors to test with Milo
+#' @param sketch whether to use sketched data for large datasets (Seurat 5 feature)
+#' @param sketch_ncells number of cells to use for sketching (default: 50000)
+#' @param sketch_method sketching method ("LeverageScore" or "Uniform")
+#' @param sketched_assay_name name of sketched assay (default: "sketch")
+#'
+#' @return Processed Seurat object with all analyses completed
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Run complete workflow
+#' result <- quick_RNAseqEr(cns,
+#'                          cluster_qc_vars = c("process_number", "caseNO", "Tissue"),
+#'                          sample_id = "uniq_id",
+#'                          cols_milo_design = c("uniq_id","Tissue","gender","AgeGroup","caseNO"),
+#'                          milo_test_fact = c("Tissue", "gender", "AgeGroup"))
+#' 
+#' # For large datasets, use sketching
+#' result <- quick_RNAseqEr(large_dataset,
+#'                          sketch = TRUE,
+#'                          sketch_ncells = 100000,
+#'                          cluster_qc_vars = c("process_number", "caseNO", "Tissue"),
+#'                          sample_id = "uniq_id",
+#'                          cols_milo_design = c("uniq_id","Tissue","gender","AgeGroup","caseNO"),
+#'                          milo_test_fact = c("Tissue", "gender", "AgeGroup"))
+#' }
+#'
 quick_RNAseqEr <- function(seur_obj,
 
                            #For Seurat processing
@@ -91,31 +189,43 @@ quick_RNAseqEr <- function(seur_obj,
                            # Milo
                            sample_id,  # use"uniq_id"
                            cols_milo_design, # use c("uniq_id","Tissue","gender","AgeGroup","caseNO")
-                           milo_test_fact  # use c("Tissue", "gender", "AgeGroup")
+                           milo_test_fact,  # use c("Tissue", "gender", "AgeGroup")
+                           
+                           # Sketching parameters for large datasets
+                           sketch = FALSE,
+                           sketch_ncells = 50000,
+                           sketch_method = c("LeverageScore", "Uniform"),
+                           sketched_assay_name = "sketch"
                            
                            #Generating Shiny app
                            
                            
                            
                            ){
-  #tryCatch({
+  tryCatch({
     save_dir_save <- save_dir
   
   
   
     # Perform standard Seurat processing
   
+    print("Step 1/8: Performing Seurat processing...")
     seur_obj <- seurat_proc(seur_obj,
                             n_pcs = n_pcs,
                             res = res,
                             select_genes = select_genes,
                             elbow_dims = elbow_dims,
-                            tsne = tsne)
+                            tsne = tsne,
+                            sketch = sketch,
+                            sketch_ncells = sketch_ncells,
+                            sketch_method = sketch_method,
+                            sketched_assay_name = sketched_assay_name)
   
     # plot dimensionally reduced data at different clustering resolutions and
     # save to file
   
   
+    print("Step 2/8: Plotting dimensional reductions...")
     plot_list(seur_obj = seur_obj,
               col_pattern = col_pattern,
               plot_cols = plot_cols ,
@@ -130,11 +240,12 @@ quick_RNAseqEr <- function(seur_obj,
     # Calculate and plot cluster purity measures
   
   
+    print("Step 3/8: Calculating cluster purity...")
     clu_pure(seur_obj,
              reduction = use_reduction, #reduction_sil,
              col_pattern = col_pattern,
              plot_cols = plot_cols,
-             clust_lab = clust_lab_sil,
+             clust_lab = clust_lab,
              label_size = label_size,
              save_dir = save_dir, #clu_pur_dir,
              width=7,
@@ -152,12 +263,12 @@ quick_RNAseqEr <- function(seur_obj,
     ## Annotation
     seur_obj <- annotate_seqEr(seur_obj,
                                dir_lab = dir_lab,
-                               ident_use = keep_resolution,
+                               ident_use = keep_res,
                                tissue_ref = tissue_ref_annotation,
                                test_use = test_use,
                                min_pct = min_pct,
                                logfc_threshold = logfc_threshold_ann,
-                               assay_use = assay_use,
+                               assay_use = if(sketch) sketched_assay_name else assay_use,
                                save_dir = save_dir,
                                custom_ref_genes = custom_ref_genes_ann,
                                custom_gene_list,
@@ -242,13 +353,14 @@ quick_RNAseqEr <- function(seur_obj,
                       fil_pct_1 = fil_pct_1,
                       fil_pct_2 = fil_pct_2,
                       save_dir = save_dir_save,
-                      test_use = test_use)
+                      test_use = test_use,
+                      assay_use = if(sketch) sketched_assay_name else assay_use)
   
     cond_genes <- gen_mark_list(file_dir = paste0(save_dir,
                                                   "/outs/",
                                                   dir_lab,
                                                   "/tables/condition_mark/",
-                                                  cluster_id,
+                                                  "RNAseqEr_annotation",
                                                   "/clusterwise"),
                                 condition = TRUE,
                                 test_cond = milo_test_fact)
@@ -331,12 +443,14 @@ quick_RNAseqEr <- function(seur_obj,
       all_res_mark <- int_res_all_mark(seur_obj = curr_srt,
                                        int_cols = keep_res_ul,
                                        save_dir = save_dir,
-                                       dir_lab = cell_lineage_name)
+                                       dir_lab = cell_lineage_name,
+                                       assay_use = if(sketch) sketched_assay_name else assay_use)
   
       pw_mark <- pairwise_dge(seur_obj = curr_srt,
                               int_cols = keep_res_ul,
                               save_dir = save_dir,
-                              dir_lab = cell_lineage_name)
+                              dir_lab = cell_lineage_name,
+                              assay_use = if(sketch) sketched_assay_name else assay_use)
   
       save_path_o <- paste0(save_dir,
                           "/outs/",
@@ -414,7 +528,8 @@ quick_RNAseqEr <- function(seur_obj,
       RNAseqEr::find_cond_markers(curr_srt,
                                   int_cols = milo_test_fact,
                                   cluster_id = "cluster_id",
-                                  dir_lab = cell_lineage_name)
+                                  dir_lab = cell_lineage_name,
+                                  assay_use = if(sketch) sketched_assay_name else assay_use)
   
   
       cond_genes <- gen_mark_list(file_dir = paste0(save_dir,
@@ -564,7 +679,7 @@ quick_RNAseqEr <- function(seur_obj,
   
     for(v in 1:length(comp_modes)){
       curr_mark <- condense_marklists(save_dir = save_dir,
-                                      exclude_out_dir = c("data","supplemenraty_tables"),
+                                      exclude_out_dir = c("data","supplementary_tables"),
                                       comp_mode = comp_modes[v],
                                       conditions = milo_test_fact,
                                       cluster_label = "cell_lineage")
@@ -600,26 +715,66 @@ quick_RNAseqEr <- function(seur_obj,
                  save_dir = getwd(),
                  default_multigene = NA,
                  default_dimred = c("umap1", "umap2"),
-                 author = "TBC",
-                 title = "TBC",
-                 journal = "TBC",
-                 volume  = "TBC",
-                 page    = "TBC",
-                 year    = "TBC",
-                 doi     = "TBC",
-                 link    = "TBC",
+                 author = "Luise A. Seeker",
+                 title = "RNAseqEr: Fast and reproducible sc/snRNAseq data analysis",
+                 journal = "Bioinformatics",
+                 volume  = "1",
+                 page    = "1",
+                 year    = "2024",
+                 doi     = "https://doi.org/10.1093/bioinformatics/xxx",
+                 link    = "https://github.com/LASeeker/RNAseqEr",
                  shiny_title = "My Shiny"
     )
   
   
-    return(seur_obj)
-    } 
+    # Generate comprehensive analysis report
+    print("Step 8/8: Generating analysis reports...")
     
-    #error = function(e) {
-    #  message("Error in quick_RNAseqEr: ", e$message)
-     # # Save partial results if possible
-    #  return(NULL)
-    #  }, warning = function(w) {
-    #    message("Warning in quick_RNAseqEr: ", w$message)
-    #  })
+    # Collect workflow parameters for the report
+    workflow_params <- list(
+      n_pcs = n_pcs,
+      res = res,
+      test_use = test_use,
+      tissue_ref = tissue_ref_annotation,
+      cluster_qc_vars = cluster_qc_vars,
+      logfc_threshold = logfc_threshold,
+      min_pct = min_pct,
+      pvalue_cutoff_go = pvalue_cutoff_go,
+      qvalue_cutoff_go = qvalue_cutoff_go,
+      keep_res = keep_res,
+      pure_thres = 0.96,  # Default from max_pure function
+      weight_factor = 22,  # Default from max_pure function
+      ad_pval = ad_pval,
+      avg_log = avg_log
+    )
+    
+    # Generate reports
+    report_dir <- generate_report(seur_obj = seur_obj,
+                                save_dir = save_dir,
+                                dir_lab = dir_lab,
+                                workflow_params = workflow_params,
+                                analysis_date = Sys.Date(),
+                                researcher_name = "Researcher",
+                                project_title = "RNAseqEr Single-cell Analysis",
+                                tissue_type = tissue_ref_annotation,
+                                species = "Human")
+    
+    # At the end, print a summary
+    cat("\n=== RNAseqEr Analysis Complete ===\n")
+    cat("Output saved to:", save_dir, "\n")
+    cat("Shiny app created in: shiny_app/\n")
+    cat("Processed data saved to: outs/data/processed/\n")
+    cat("Analysis reports saved to:", report_dir, "\n")
+    cat("\nReports generated:")
+    cat("- methods_report.md (Methods section for papers)")
+    cat("- decision_justifications.md (Justifications for analysis decisions)")
+    cat("- complete_analysis_report.md (Combined report)")
+  
+    return(seur_obj)
+    }, error = function(e) {
+      message("Error in quick_RNAseqEr: ", e$message)
+      message("Saving partial results...")
+      # Save what we have so far
+      return(seur_obj)
+    })
   }

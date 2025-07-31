@@ -45,6 +45,9 @@ biological pathway but "MF" for molecular function for example is valid, too.}
 \item{qvalue_cutoff}{q value cutoff for significant gene ontology results}
 
 \item{read_able}{gene names in GO output readable? Default is TRUE}
+
+\item{logFC_column}{name of the column containing log2 fold change values.
+Default is "avg_log2FC"}
 }
 \value{
 returns a gene ontology result (add data format) ready for plotting

@@ -17,6 +17,8 @@
 #' @param pvalue_cutoff p value cutoff for significant gene ontology results
 #' @param qvalue_cutoff q value cutoff for significant gene ontology results
 #' @param read_able gene names in GO output readable? Default is TRUE
+#' @param logFC_column name of the column containing log2 fold change values.
+#' Default is "avg_log2FC"
 #' @import clusterProfiler org.Hs.eg.db Seurat
 #'
 #' @return returns a gene ontology result (add data format) ready for plotting
