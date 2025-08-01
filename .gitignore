@@ -6,6 +6,7 @@
 .httr-oauth
 .DS_Store
 .quarto
+.env
 inst/doc
 vignettes/outs/
 outs

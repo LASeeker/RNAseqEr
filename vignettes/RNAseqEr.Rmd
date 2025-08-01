@@ -74,7 +74,8 @@ All results should be thoroughly checked and manually corrected if necessary.
 # Installation
 
 ```{r, eval = FALSE}
-install_github("LASeeker/RNAseqEr")
+# install.packages("devtools")  # Uncomment if devtools is not installed
+# devtools::install_github("LASeeker/RNAseqEr")
 
 ```
 
@@ -102,6 +103,82 @@ age and sex groups. This data can be loaded with
 
 ```{r}
 cns
+```
+
+
+## Use wrapper function for the entire workflow
+```{r, eval = FALSE}
+
+result <- quick_RNAseqEr(cns,
+                         cluster_qc_vars = c("process_number", "caseNO", "Tissue"),
+                         sample_id = "uniq_id",
+                         cols_milo_design = c("uniq_id","Tissue","gender","AgeGroup","caseNO"),
+                         milo_test_fact = c("Tissue", "gender", "AgeGroup"),
+                         # Volcano plot customization
+                         volcano_mode = c("overall", "clusterwise"),
+                         volcano_plotheight = 8,
+                         volcano_plotwidth = 10,
+                         volcano_additional_p_adjust = TRUE,  # Additional p-value adjustment
+                         volcano_p_adjust_method = "BH",      # Benjamini-Hochberg method
+                         # Shiny app customization
+                         shiny_name = "my_analysis",
+                         author = "Dr. Smith",
+                         title = "My Single Cell Analysis",
+                         # Manuscript generation (optional)
+                         manuscript_generation = TRUE,
+                         manuscript_title = "Single-cell analysis reveals age-related changes in brain tissue",
+                         manuscript_author = "Dr. Smith",
+                         manuscript_journal = "Nature Communications",
+                         manuscript_llm_provider = "openai",
+                         manuscript_api_key = "your-api-key-here",  # Set your API key
+                         manuscript_model = "gpt-4",
+                         manuscript_include_figures = TRUE,
+                         manuscript_focus_genes = "condition",
+                         manuscript_min_logfc = 0.5,
+                         manuscript_max_pvalue = 0.05)
+ 
+```
+
+```{r, eval = FALSE}
+#For large datasets, use sketching
+result <- quick_RNAseqEr(large_dataset,
+                          sketch = TRUE,
+                          sketch_ncells = 100000,
+                          cluster_qc_vars = c("process_number", "caseNO", "Tissue"),
+                          sample_id = "uniq_id",
+                          cols_milo_design = c("uniq_id","Tissue","gender","AgeGroup","caseNO"),
+                          milo_test_fact = c("Tissue", "gender", "AgeGroup"),
+                         # Volcano plot customization
+                         volcano_mode = c("overall", "clusterwise"),
+                         volcano_plotheight = 8,
+                         volcano_plotwidth = 10,
+                         volcano_additional_p_adjust = TRUE,  # Additional p-value adjustment
+                         volcano_p_adjust_method = "BH",      # Benjamini-Hochberg method
+                         # Shiny app customization
+                         shiny_name = "my_analysis",
+                         author = "Dr. Smith",
+                         title = "My Single Cell Analysis")
+
+#Customize Shiny app parameters
+result <- quick_RNAseqEr(cns,
+                          cluster_qc_vars = c("process_number", "caseNO", "Tissue"),
+                          sample_id = "uniq_id",
+                          cols_milo_design = c("uniq_id","Tissue","gender","AgeGroup","caseNO"),
+                          milo_test_fact = c("Tissue", "gender", "AgeGroup"),
+                          # Shiny app customization
+                          shiny_name = "my_analysis",
+                          default_1 = "AgeGroup",  # Use specific column name
+                          default_2 = 5,           # Use 5th metadata column
+                          author = "Dr. Smith",
+                          title = "My Single Cell Analysis",
+                          journal = "Nature",
+                          volume = "123",
+                          page = "456",
+                          year = "2024",
+                          doi = "https://doi.org/10.1038/xxx",
+                          link = "https://github.com/myself/myproject",
+                          shiny_title = "My Amazing Results")
+
 ```
 
 ## Standard Seurat processing
@@ -646,6 +723,46 @@ save_feat_plots(cns,
 
 ```
 
+# Volcano plots for condition markers
+
+Volcano plots are excellent for visualizing differential gene expression results, 
+showing the relationship between statistical significance (p-value) and biological 
+relevance (fold change). The `volcano_seqEr` function can create volcano plots 
+that show multiple comparisons in a single plot, making it easy to identify 
+genes that are differentially expressed across different conditions.
+
+The function can work in two modes:
+- **"overall" mode**: Shows all cell types together in one plot
+- **"clusterwise" mode**: Creates separate plots for each cell type
+
+```{r, eval = FALSE}
+# Generate volcano plots for condition markers
+volcano_seqEr(dge_res = cond_genes,
+              clu_col = "cluster",
+              condition_label = "condition",
+              mode = "overall",  # or "clusterwise"
+              save_dir = "../",
+              conditions = c("AgeGroup", "Tissue"),
+              plotheight = 6,
+              plotwidth = 8,
+              additional_p_adjust = TRUE,  # Additional p-value adjustment across all comparisons
+              p_adjust_method = "BH")     # Benjamini-Hochberg method
+```
+
+The volcano plots will be saved in the `outs/summary_figures/conditions/volcano/` 
+directory and will show:
+- Genes with high fold change and significance highlighted
+- Color coding by cell type
+- Top 5 most significant genes labeled
+- Clear separation between upregulated and downregulated genes
+
+**Note on Multiple Testing Correction:**
+The function uses Seurat's adjusted p-values (`p_val_adj`) by default, which applies 
+Bonferroni correction within each comparison. For additional rigor when testing 
+multiple conditions or cell types, you can enable `additional_p_adjust = TRUE` 
+to perform an additional p-value adjustment across all comparisons using methods 
+like Benjamini-Hochberg (BH) or others.
+
 # Gene ontology analysis
 
 It may also be useful to check whether there are certain pathways differentially 
@@ -713,6 +830,265 @@ https://seeker-science.shinyapps.io/shiny_app_multi/ for example.
 More data visualization modes are available in the drop down menu of each dataset/
 cell type tab.
 
+## Manuscript Generation with LLM Integration
+
+RNAseqEr can optionally generate manuscript drafts using LLM integration. This feature 
+analyzes your results and creates a first draft of a scientific manuscript, focusing 
+on the most biologically relevant findings.
+
+### Key Features:
+
+**Automatic Analysis:**
+- Identifies top differentially expressed genes
+- Focuses on condition-specific changes
+- Selects most informative plots for figures
+- Generates summary statistics
+
+**LLM Integration:**
+- Supports OpenAI GPT-4, Anthropic Claude, and local LLMs
+- Customizable journal style (Nature, Cell, bioRxiv, etc.)
+- Configurable focus on specific gene categories
+- Adjustable statistical thresholds
+
+**Output Files:**
+- `manuscript_draft.md`: Complete manuscript draft
+- `figure_selection.md`: Recommended plots for figures
+- `summary_statistics.md`: Key statistics and results
+
+### Usage Example:
+
+```{r, eval = FALSE}
+# Enable manuscript generation
+result <- quick_RNAseqEr(cns,
+                         # ... other parameters ...
+                         manuscript_generation = TRUE,
+                         manuscript_title = "Single-cell analysis reveals age-related changes in brain tissue",
+                         manuscript_author = "Dr. Smith",
+                         manuscript_journal = "Nature Communications",
+                         manuscript_llm_provider = "openai",
+                         manuscript_api_key = "your-api-key-here",
+                         manuscript_model = "gpt-4",
+                         manuscript_include_figures = TRUE,
+                         manuscript_focus_genes = "condition",
+                         manuscript_min_logfc = 0.5,
+                         manuscript_max_pvalue = 0.05)
+```
+
+### Important Notes:
+
+**Purpose:** The generated manuscript serves as a starting point for:
+- Validating results through manual analysis
+- Planning laboratory experiments for validation
+- Identifying key genes for follow-up studies
+- Understanding the biological significance of findings
+
+**Validation Required:** The LLM-generated manuscript should be:
+- Reviewed by domain experts
+- Validated through independent analysis
+- Supplemented with experimental validation
+- Refined based on peer review feedback
+
+**API Requirements:** To use LLM integration, you'll need:
+- OpenAI API key (for GPT-4)
+- Anthropic API key (for Claude)
+- Or access to a local LLM service
+
+**Environment Setup:** Create a `.env` file in your project root with your API keys:
+```
+API_KEY_GPT4=your-openai-api-key-here
+ANTHROPIC_API_KEY=your-anthropic-api-key-here
+```
+
+## Multi-Species Support
+
+RNAseqEr supports analysis of single-cell RNA-seq data from multiple species. 
+The package automatically adapts to different species by:
+
+### **Supported Species:**
+- **Mammals:** Human, Mouse, Rat, Cow, Pig, Dog, Cat, Horse, Sheep, Goat, Rabbit, Guinea Pig, Hamster
+- **Primates:** Monkey, Chimpanzee, Gorilla, Orangutan, Marmoset, Squirrel Monkey, Tarsier, Bushbaby
+- **Other:** Zebrafish, Drosophila, Chicken
+
+### **Automatic Adaptations:**
+- **Gene Ontology Databases:** Automatically selects appropriate organism database
+- **Tissue References:** Adapts ScType annotation for different tissues
+- **Gene ID Mapping:** Handles species-specific gene identifiers
+- **Statistical Methods:** All statistical methods work across species
+
+### **Usage Examples:**
+
+```{r, eval = FALSE}
+# Human brain analysis (default)
+result <- quick_RNAseqEr(human_data,
+                         species = "Human",
+                         tissue_ref_annotation = "Brain")
+
+# Mouse liver analysis
+result <- quick_RNAseqEr(mouse_data,
+                         species = "Mouse",
+                         tissue_ref_annotation = "Liver")
+
+# Zebrafish brain analysis
+result <- quick_RNAseqEr(zebrafish_data,
+                         species = "Zebrafish",
+                         tissue_ref_annotation = "Brain")
+
+# Drosophila analysis
+result <- quick_RNAseqEr(drosophila_data,
+                         species = "Drosophila",
+                         tissue_ref_annotation = "Brain")
+```
+
+### **Species-Specific Functions:**
+
+```{r, eval = FALSE}
+# Check if species is supported
+is_species_supported("Mouse")  # Returns TRUE
+is_species_supported("Alien")  # Returns FALSE
+
+# Get organism database for gene ontology
+get_organism_db("Mouse")       # Returns "org.Mm.eg.db"
+get_organism_db("Zebrafish")   # Returns "org.Dr.eg.db"
+
+# Get species-specific parameters
+params <- get_species_params("Mouse", "Liver")
+```
+
+### **Important Notes:**
+- **Gene Symbols:** Ensure your data uses appropriate gene symbols for the species
+- **Tissue Compatibility:** Some tissues may have limited annotation support for certain species
+- **Database Installation:** Install appropriate organism databases (e.g., `org.Mm.eg.db` for mouse)
+- **Validation:** Always validate results with species-specific literature
+
+## Environment Setup for LLM Integration
+
+RNAseqEr can automatically load API keys from environment variables, making it easy to use LLM integration without hardcoding sensitive information.
+
+### **Setting Up Your Environment:**
+
+#### **Option 1: Using .env file with dotenv package (recommended for production)**
+
+1. **Install the dotenv package:**
+   ```{r, eval = FALSE}
+   install.packages("dotenv")
+   ```
+
+2. **Create a `.env` file** in your project root directory:
+   ```
+   API_KEY_GPT4=your-openai-api-key-here
+   ANTHROPIC_API_KEY=your-anthropic-api-key-here
+   ```
+
+3. **Test your setup:**
+   ```{r, eval = FALSE}
+   # Test environment setup (automatically installs dotenv if needed)
+   setup_rnaseqer_env()
+   
+   # Check available providers
+   check_api_keys()
+   
+   # Test API key retrieval
+   get_api_key(provider = "openai")
+   ```
+
+#### **Option 2: Manual setup (for testing)**
+
+If you have issues with the .env file, you can set the API key manually:
+
+```{r, eval = FALSE}
+# Set API key manually
+set_api_key_manual("your-api-key-here", "openai")
+
+# Test the setup
+test_api_key_setup()
+```
+
+3. **Use in analysis:**
+   ```{r, eval = FALSE}
+   # The workflow will automatically use your API key
+   result <- quick_RNAseqEr(data,
+                            manuscript_generation = TRUE,
+                            manuscript_llm_provider = "openai")
+   ```
+
+### **Supported Environment Variables:**
+- `API_KEY_GPT4` - OpenAI API key
+- `OPENAI_API_KEY` - Alternative OpenAI key name
+- `ANTHROPIC_API_KEY` - Anthropic API key
+- `CLAUDE_API_KEY` - Alternative Anthropic key name
+
+
+# Output Structure
+
+RNAseqEr creates a comprehensive output structure organized in the `outs/` directory. Here's the complete folder structure:
+
+```
+outs/
+├── all_celltypes/                    # Main analysis results
+│   ├── plots/
+│   │   ├── resolution_plots/         # UMAP plots at different resolutions
+│   │   ├── final_clustering/         # Final clustering plots
+│   │   ├── Condition/                # Condition-specific plots
+│   │   │   ├── AgeGroup_mark/
+│   │   │   │   └── violin_plots/
+│   │   │   └── Tissue_mark/
+│   │   │       └── violin_plots/
+│   │   └── heatmaps/                 # Cluster similarity heatmaps
+│   ├── tables/
+│   │   ├── DGE/
+│   │   │   └── broad_celltype_markers/  # Differential gene expression results
+│   │   ├── condition_mark/
+│   │   │   └── RNAseqEr_annotation/
+│   │   │       ├── clusterwise/      # Cluster-wise condition markers
+│   │   │       └── overall/          # Overall condition markers
+│   │   └── cluster_marker/
+│   │       ├── overall/              # Overall cluster markers
+│   │       └── pairwise/             # Pairwise cluster comparisons
+│   └── summary_figures/
+│       └── conditions/
+│           └── volcano/               # Volcano plots for condition markers
+├── data/                             # Processed Seurat objects
+│   ├── processed/
+│   │   └── all_data/                 # Main processed dataset
+│   ├── Astrocytes.RDS                # Subsetted cell lineage data
+│   ├── Oligodendrocytes.RDS
+│   ├── Neurons.RDS
+│   └── ...
+├── supplementary_tables/              # Summary tables
+│   ├── overall_condition_markers.csv
+│   └── clusterwise_condition_markers.csv
+├── shiny_app/                        # Interactive Shiny application
+│   ├── ui.R
+│   ├── server.R
+│   └── www/
+└── reports/                          # Analysis reports
+    ├── methods_report.md
+    ├── decision_justifications.md
+    └── complete_analysis_report.md
+```
+
+### Key Output Files:
+
+**Plots:**
+- `resolution_plots/`: UMAP plots at different clustering resolutions
+- `final_clustering/`: Final clustering plots for each cell lineage
+- `Condition/`: Violin plots and feature plots for condition markers
+- `heatmaps/`: Cluster similarity heatmaps
+- `volcano/`: Volcano plots showing differential expression
+
+**Tables:**
+- `DGE/`: Differential gene expression results
+- `condition_mark/`: Condition-specific marker genes
+- `cluster_marker/`: Cluster-specific marker genes
+- `supplementary_tables/`: Summary CSV files
+
+**Data:**
+- `.RDS` files: Processed Seurat objects for each cell lineage
+- `processed/`: Main processed dataset
+
+**Applications:**
+- `shiny_app/`: Interactive web application for data exploration
+- `reports/`: Comprehensive analysis reports
 
 # Session Info
 

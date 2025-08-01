@@ -83,6 +83,82 @@ library(dplyr)
 
 # Load example data
 data(cns)
+
+# Multi-species support
+result <- quick_RNAseqEr(mouse_data, species = "Mouse", tissue_ref_annotation = "Liver")
+result <- quick_RNAseqEr(zebrafish_data, species = "Zebrafish", tissue_ref_annotation = "Brain")
+```
+
+## API Key Setup for LLM Integration
+
+RNAseqEr supports LLM integration for manuscript generation. To use this feature, you need to set up your API keys.
+
+### **Option 1: Using dotenv package (Recommended)**
+
+1. **Install the dotenv package:**
+   ```r
+   install.packages("dotenv")
+   ```
+
+2. **Create a `.env` file** in your project root:
+   ```
+   API_KEY_GPT4=your-openai-api-key-here
+   ANTHROPIC_API_KEY=your-anthropic-api-key-here
+   ```
+
+3. **Test your setup:**
+   ```r
+   library(RNAseqEr)
+   setup_rnaseqer_env()
+   ```
+
+### **Option 2: Manual setup**
+
+If you prefer to set the API key manually:
+
+```r
+library(RNAseqEr)
+set_api_key_manual("your-api-key-here", "openai")
+test_api_key_setup()
+```
+
+### **Usage in Analysis:**
+
+```r
+# Enable manuscript generation
+result <- quick_RNAseqEr(data,
+                         manuscript_generation = TRUE,
+                         manuscript_llm_provider = "openai")
+```
+
+## Multi-Species Support
+
+RNAseqEr supports analysis of single-cell RNA-seq data from multiple species:
+
+### **Supported Species:**
+- **Mammals:** Human, Mouse, Rat, Cow, Pig, Dog, Cat, Horse, Sheep, Goat, Rabbit, Guinea Pig, Hamster
+- **Primates:** Monkey, Chimpanzee, Gorilla, Orangutan, Marmoset, Squirrel Monkey, Tarsier, Bushbaby
+- **Other:** Zebrafish, Drosophila, Chicken
+
+### **Automatic Adaptations:**
+- **Gene Ontology Databases:** Automatically selects appropriate organism database
+- **Tissue References:** Adapts ScType annotation for different tissues
+- **Gene ID Mapping:** Handles species-specific gene identifiers
+- **Statistical Methods:** All statistical methods work across species
+
+### **Usage Examples:**
+```r
+# Human brain analysis (default)
+result <- quick_RNAseqEr(human_data, species = "Human", tissue_ref_annotation = "Brain")
+
+# Mouse liver analysis
+result <- quick_RNAseqEr(mouse_data, species = "Mouse", tissue_ref_annotation = "Liver")
+
+# Zebrafish brain analysis
+result <- quick_RNAseqEr(zebrafish_data, species = "Zebrafish", tissue_ref_annotation = "Brain")
+
+# Drosophila analysis
+result <- quick_RNAseqEr(drosophila_data, species = "Drosophila", tissue_ref_annotation = "Brain")
 ```
 
 ## Test with provided test dataset or own data
@@ -598,6 +674,83 @@ go_results <- perform_go(cns,
 
 dotplot(go_results)
 ```
+
+## Output Structure
+
+RNAseqEr creates a comprehensive output structure organized in the `outs/` directory. Here's the complete folder structure:
+
+```
+outs/
+├── all_celltypes/                    # Main analysis results
+│   ├── plots/
+│   │   ├── resolution_plots/         # UMAP plots at different resolutions
+│   │   ├── final_clustering/         # Final clustering plots
+│   │   ├── Condition/                # Condition-specific plots
+│   │   │   ├── AgeGroup_mark/
+│   │   │   │   └── violin_plots/
+│   │   │   └── Tissue_mark/
+│   │   │       └── violin_plots/
+│   │   └── heatmaps/                 # Cluster similarity heatmaps
+│   ├── tables/
+│   │   ├── DGE/
+│   │   │   └── broad_celltype_markers/  # Differential gene expression results
+│   │   ├── condition_mark/
+│   │   │   └── RNAseqEr_annotation/
+│   │   │       ├── clusterwise/      # Cluster-wise condition markers
+│   │   │       └── overall/          # Overall condition markers
+│   │   └── cluster_marker/
+│   │       ├── overall/              # Overall cluster markers
+│   │       └── pairwise/             # Pairwise cluster comparisons
+│   └── summary_figures/
+│       └── conditions/
+│           └── volcano/               # Volcano plots for condition markers
+├── data/                             # Processed Seurat objects
+│   ├── processed/
+│   │   └── all_data/                 # Main processed dataset
+│   ├── Astrocytes.RDS                # Subsetted cell lineage data
+│   ├── Oligodendrocytes.RDS
+│   ├── Neurons.RDS
+│   └── ...
+├── supplementary_tables/              # Summary tables
+│   ├── overall_condition_markers.csv
+│   └── clusterwise_condition_markers.csv
+├── shiny_app/                        # Interactive Shiny application
+│   ├── ui.R
+│   ├── server.R
+│   └── www/
+├── reports/                          # Analysis reports
+│   ├── methods_report.md
+│   ├── decision_justifications.md
+│   └── complete_analysis_report.md
+└── manuscript/                       # LLM-generated manuscript (optional)
+    ├── manuscript_draft.md
+    ├── figure_selection.md
+    └── summary_statistics.md
+```
+
+### Key Output Files:
+
+**Plots:**
+- `resolution_plots/`: UMAP plots at different clustering resolutions
+- `final_clustering/`: Final clustering plots for each cell lineage
+- `Condition/`: Violin plots and feature plots for condition markers
+- `heatmaps/`: Cluster similarity heatmaps
+- `volcano/`: Volcano plots showing differential expression
+
+**Tables:**
+- `DGE/`: Differential gene expression results
+- `condition_mark/`: Condition-specific marker genes
+- `cluster_marker/`: Cluster-specific marker genes
+- `supplementary_tables/`: Summary CSV files
+
+**Data:**
+- `.RDS` files: Processed Seurat objects for each cell lineage
+- `processed/`: Main processed dataset
+
+**Applications:**
+- `shiny_app/`: Interactive web application for data exploration
+- `reports/`: Comprehensive analysis reports
+- `manuscript/`: LLM-generated manuscript draft and figure selection
 
 ## Generation of a Shiny app
 

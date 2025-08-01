@@ -36,7 +36,8 @@ Imports:
     stats,
     utils,
     shinyhelper,
-    ShinyCell
+    ShinyCell,
+    dotenv
 Suggests: 
     knitr,
     rmarkdown,

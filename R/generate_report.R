@@ -148,13 +148,28 @@ generate_methods_report <- function(seur_obj, save_dir, dir_lab, workflow_params
     paste("- Minimum percentage threshold:", workflow_params$min_pct %||% 0.25),
     paste("- Condition markers were identified for each cluster"),
     "",
-    "### 8. Gene Ontology Analysis",
+    "### 8. Statistical Testing and Multiple Testing Correction",
+    paste("- Primary p-value adjustment: Bonferroni correction applied within each comparison by Seurat's FindAllMarkers function"),
+    paste("- Additional p-value adjustment:", if(workflow_params$volcano_additional_p_adjust %||% FALSE) "Applied" else "Not applied"),
+    if(workflow_params$volcano_additional_p_adjust %||% FALSE) {
+      paste("- Additional adjustment method:", workflow_params$volcano_p_adjust_method %||% "BH")
+    } else {
+      "- Additional adjustment method: Not applicable"
+    },
+    paste("- Justification for multiple testing correction: Seurat's Bonferroni correction controls for multiple comparisons within each condition, while additional adjustment accounts for testing multiple conditions and cell types"),
+    "",
+    "### 9. Volcano Plot Analysis",
+    paste("- Volcano plots generated for", paste(workflow_params$volcano_mode %||% c("overall"), collapse = " and "), "modes"),
+    paste("- Statistical thresholds: p-value cutoff = 0.05, log fold change cutoff = 0.8"),
+    paste("- Multiple testing correction applied to volcano plots: ", if(workflow_params$volcano_additional_p_adjust %||% FALSE) "Yes" else "No"),
+    "",
+    "### 10. Gene Ontology Analysis",
     paste("- Gene ontology analysis was performed using ClusterProfiler"),
     paste("- Biological processes (BP) ontology was used"),
     paste("- P-value cutoff:", workflow_params$pvalue_cutoff_go %||% 0.05),
     paste("- Q-value cutoff:", workflow_params$qvalue_cutoff_go %||% 0.05),
     "",
-    "### 9. Visualization and Interactive Analysis",
+    "### 11. Visualization and Interactive Analysis",
     paste("- Dimensional reduction plots were generated for all clustering resolutions"),
     paste("- Heatmaps were generated for cluster marker genes"),
     paste("- Violin plots were generated for condition-specific genes"),
@@ -234,15 +249,36 @@ generate_decision_justifications <- function(seur_obj, save_dir, dir_lab,
           actual_thresholds$n_markers %||% "multiple", "marker genes with an average log fold change of", 
           round(actual_thresholds$avg_logfc %||% 0, 2), ". The log fold change threshold was chosen to balance sensitivity and specificity."),
     "",
-    "### 6. Gene Ontology Analysis Settings",
+    "### 6. Multiple Testing Correction Strategy",
+    paste("**Decision:** Applied", if(workflow_params$volcano_additional_p_adjust %||% FALSE) "two-level" else "single-level", "multiple testing correction"),
+    paste("**Justification:** Seurat's FindAllMarkers function automatically applies Bonferroni correction within each comparison, providing p_val_adj. This controls for multiple comparisons within each condition. ", 
+          if(workflow_params$volcano_additional_p_adjust %||% FALSE) {
+            paste("Additional", workflow_params$volcano_p_adjust_method %||% "BH", "correction was applied across all comparisons to account for testing multiple conditions and cell types. This ensures robust statistical inference when analyzing multiple conditions simultaneously.")
+          } else {
+            "No additional correction was applied across conditions, as the primary Bonferroni correction was deemed sufficient for this analysis."
+          }),
+    paste("**Statistical rationale:** The", if(workflow_params$volcano_additional_p_adjust %||% FALSE) workflow_params$volcano_p_adjust_method %||% "BH" else "Bonferroni", "method was chosen because ", 
+          if(workflow_params$volcano_additional_p_adjust %||% FALSE) {
+            if(workflow_params$volcano_p_adjust_method %||% "BH" == "BH") {
+              "it controls the false discovery rate (FDR) and is less conservative than Bonferroni correction, making it suitable for exploratory analyses with multiple conditions."
+            } else if(workflow_params$volcano_p_adjust_method %||% "BH" == "bonferroni") {
+              "it provides the most conservative correction, ensuring minimal false positives at the cost of reduced power."
+            } else {
+              "it provides appropriate control for multiple testing while maintaining statistical power."
+            }
+          } else {
+            "Bonferroni correction provides strong control of family-wise error rate within each comparison."
+          }),
+    "",
+    "### 7. Gene Ontology Analysis Settings",
     paste("**Decision:** Used Biological Processes ontology with p-value cutoff of", workflow_params$pvalue_cutoff_go %||% 0.05),
     "**Justification:** Biological Processes provides the most interpretable results for understanding cellular functions. The p-value cutoff ensures statistical significance while the q-value cutoff controls for multiple testing.",
     "",
-    "### 7. Subclustering Strategy",
+    "### 8. Subclustering Strategy",
     "**Decision:** Performed subclustering within major cell lineages",
     "**Justification:** Subclustering allows for the identification of cell subtypes within major lineages. This is particularly important for complex tissues where cell types may be further subdivided.",
     "",
-    "### 8. Visualization Choices",
+    "### 9. Visualization Choices",
     "**Decision:** Generated UMAP plots and heatmaps for visualization",
     "**Justification:** UMAP provides an intuitive visualization of cell relationships while preserving local structure. Heatmaps allow for the visualization of gene expression patterns across clusters and conditions.",
     "",
@@ -262,7 +298,9 @@ generate_decision_justifications <- function(seur_obj, save_dir, dir_lab,
     "",
     "3. **Statistical Power:** The statistical power of differential expression analysis depends on the number of cells per cluster and condition.",
     "",
-    "4. **Computational Resources:** The analysis requires significant computational resources, particularly for large datasets.",
+    "4. **Multiple Testing Correction:** The choice of multiple testing correction method affects the balance between sensitivity and specificity. More conservative methods (e.g., Bonferroni) reduce false positives but may miss true signals, while less conservative methods (e.g., BH) maintain power but may include more false positives.",
+    "",
+    "5. **Computational Resources:** The analysis requires significant computational resources, particularly for large datasets.",
     "",
     "### Summary of Analysis Results",
     "",
@@ -279,7 +317,17 @@ generate_decision_justifications <- function(seur_obj, save_dir, dir_lab,
     paste("**Differential Expression Results:**"),
     paste("- Number of marker genes identified:", actual_thresholds$n_markers %||% "multiple"),
     paste("- Average log fold change:", round(actual_thresholds$avg_logfc %||% 0, 2)),
-    paste("- Number of condition-specific markers:", actual_thresholds$n_condition_markers %||% "multiple")
+    paste("- Number of condition-specific markers:", actual_thresholds$n_condition_markers %||% "multiple"),
+    "",
+    paste("**Statistical Testing Results:**"),
+    paste("- Primary p-value adjustment: Bonferroni correction (within comparisons)"),
+    paste("- Additional p-value adjustment:", if(workflow_params$volcano_additional_p_adjust %||% FALSE) "Applied" else "Not applied"),
+    if(workflow_params$volcano_additional_p_adjust %||% FALSE) {
+      paste("- Additional adjustment method:", workflow_params$volcano_p_adjust_method %||% "BH")
+    } else {
+      paste("- Additional adjustment method: Not applicable")
+    },
+    paste("- Volcano plot modes:", paste(workflow_params$volcano_mode %||% c("overall"), collapse = " and "))
   )
   
   return(decisions_text)

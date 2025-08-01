@@ -11,7 +11,8 @@ find_min_log2(
   logfc_threshold = 0.05,
   only_pos = TRUE,
   divisor = 2,
-  percentile = 0.95
+  percentile = 0.95,
+  assay_use = "RNA"
 )
 }
 \arguments{
@@ -37,6 +38,9 @@ another.}
 
 \item{percentile}{cutoff for percentile. Default is set to 0.95. If set to 1
 it can be seen how large log2 fold changes can be if driven only by noise.}
+
+\item{assay_use}{assay to use for differential gene expression analysis.
+Default is "RNA". For sketched data, use "sketch".}
 }
 \value{
 returns a value which represents the percentile of log2 fold changes

@@ -1,5 +1,33 @@
-
-
+#' Generate volcano plots for differential gene expression results
+#' @description
+#' This function creates volcano plots for differential gene expression analysis results,
+#' showing multiple comparisons in a single plot. It can work in "overall" mode (all cell types together)
+#' or "clusterwise" mode (separate plots for each cell type).
+#'
+#' @param dge_res data frame containing differential gene expression results
+#' @param clu_col column name for cluster information (default: "cluster_id")
+#' @param condition_label column name for condition information (default: "condition")
+#' @param mode analysis mode: "overall" or "clusterwise" (default: "overall")
+#' @param save_dir directory to save plots (default: getwd())
+#' @param conditions vector of conditions to analyze
+#' @param plotheight height of plots (default: 6)
+#' @param plotwidth width of plots (default: 8)
+#' @param additional_p_adjust whether to perform additional p-value adjustment across all comparisons (default: FALSE)
+#' @param p_adjust_method method for additional p-value adjustment: "bonferroni", "holm", "hochberg", "BH", "BY", "fdr" (default: "BH")
+#'
+#' @return Saves volcano plots to the specified directory
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' volcano_seqEr(dge_res = condition_markers,
+#'               conditions = c("AgeGroup", "Tissue"),
+#'               mode = "overall",
+#'               save_dir = "results",
+#'               additional_p_adjust = TRUE,
+#'               p_adjust_method = "BH")
+#' }
+#'
 volcano_seqEr <- function(dge_res,
                           clu_col = "cluster_id",
                           condition_label = "condition",
@@ -7,7 +35,20 @@ volcano_seqEr <- function(dge_res,
                           save_dir = getwd(),
                           conditions,
                           plotheight = 6,
-                          plotwidth = 8){
+                          plotwidth = 8,
+                          additional_p_adjust = FALSE,
+                          p_adjust_method = "BH"){
+
+  # Perform additional p-value adjustment across all comparisons if requested
+  if(additional_p_adjust && nrow(dge_res) > 0) {
+    # Store original adjusted p-values
+    dge_res$p_val_adj_original <- dge_res$p_val_adj
+    
+    # Perform additional adjustment across all tests
+    dge_res$p_val_adj <- p.adjust(dge_res$p_val_adj, method = p_adjust_method)
+    
+    cat("Performed additional p-value adjustment using", p_adjust_method, "method across", nrow(dge_res), "tests\n")
+  }
 
 
     if(mode == "overall"){

@@ -5,6 +5,7 @@
 #' and Shiny app generation.
 #'
 #' @param seur_obj Seurat object to analyze
+#' @param species Species analyzed (default: "Human")
 #' @param n_pcs number of principal components for analysis
 #' @param res clustering resolutions to test
 #' @param select_genes genes to use for scaling
@@ -74,6 +75,30 @@
 #' @param sketch_ncells number of cells to use for sketching (default: 50000)
 #' @param sketch_method sketching method ("LeverageScore" or "Uniform")
 #' @param sketched_assay_name name of sketched assay (default: "sketch")
+#' @param shiny_name name for the Shiny app (default: "all_celltypes")
+#' @param read_file whether to read from file for Shiny app (default: TRUE)
+#' @param ext_pattern file extension pattern for Shiny app (default: ".RDS")
+#' @param default_1 first default metadata column for Shiny app. If NULL, uses 4th column; if numeric, uses that column index (default: NULL)
+#' @param default_2 second default metadata column for Shiny app. If NULL, uses 5th column; if numeric, uses that column index (default: NULL)
+#' @param assay_use_shiny assay to use in Shiny app (default: "RNA")
+#' @param gex_slot gene expression slots to include in Shiny app (default: c("data", "scale.data", "counts"))
+#' @param gene_mapping whether to use gene mapping in Shiny app (default: FALSE)
+#' @param default_gene1 first default gene for Shiny app (default: "MALAT1")
+#' @param default_gene2 second default gene for Shiny app (default: "GAPDH")
+#' @param default_multigene default multi-gene selection for Shiny app (default: NA)
+#' @param default_dimred default dimensional reduction for Shiny app (default: c("umap1", "umap2"))
+#' @param author author name for Shiny app (default: "My name")
+#' @param title publication title for Shiny app (default: "TBC")
+#' @param journal journal name for Shiny app (default: "TBC")
+#' @param volume journal volume for Shiny app (default: "TBC")
+#' @param page journal page for Shiny app (default: "TBC")
+#' @param year publication year for Shiny app (default: "2024")
+#' @param doi DOI for Shiny app (default: "TBC")
+#' @param link link for Shiny app (default: "TBC")
+#' @param shiny_title title for Shiny app (default: "My Shiny")
+#' @param volcano_mode modes for volcano plots ("overall", "clusterwise", or both) (default: c("overall", "clusterwise"))
+#' @param volcano_plotheight height of volcano plots (default: 6)
+#' @param volcano_plotwidth width of volcano plots (default: 8)
 #'
 #' @return Processed Seurat object with all analyses completed
 #' @export
@@ -98,6 +123,7 @@
 #' }
 #'
 quick_RNAseqEr <- function(seur_obj,
+                           species = "Human",
 
                            #For Seurat processing
                            n_pcs = 20,
@@ -160,14 +186,14 @@ quick_RNAseqEr <- function(seur_obj,
                            reverse_go = FALSE,
                            translate_gene_id_from = "SYMBOL",
                            translate_gene_id_to = "ENTREZID",
-                           org_use = "org.Hs.eg.db",
+                           org_use = NULL,  # Will be set automatically based on species
                            ontology = "BP",
                            pvalue_cutoff_go = 0.05,
                            qvalue_cutoff_go = 0.05,
                            read_able = TRUE,
 
                            #specify parameters for annotation using scType
-                           tissue_ref_annotation = "Brain",
+                           tissue_ref_annotation = NULL,  # Will be set automatically based on species and tissue
                            min_pct_ann = 0.25,
                            logfc_threshold_ann = 0.8,
                            assay_use_ann = "RNA",
@@ -195,16 +221,72 @@ quick_RNAseqEr <- function(seur_obj,
                            sketch = FALSE,
                            sketch_ncells = 50000,
                            sketch_method = c("LeverageScore", "Uniform"),
-                           sketched_assay_name = "sketch"
+                           sketched_assay_name = "sketch",
+                           
+                           # Shiny app parameters
+                           shiny_name = "all_celltypes",
+                           read_file = TRUE,
+                           ext_pattern = ".RDS",
+                           default_1 = NULL,  # If NULL, will use 4th metadata column; if numeric, will use that column index
+                           default_2 = NULL,  # If NULL, will use 5th metadata column; if numeric, will use that column index
+                           assay_use_shiny = "RNA",
+                           gex_slot = c("data", "scale.data", "counts"),
+                           gene_mapping = FALSE,
+                           default_gene1 = "MALAT1",
+                           default_gene2 = "GAPDH",
+                           default_multigene = NA,
+                           default_dimred = c("umap1", "umap2"),
+                           author = "My name",
+                           title = "TBC",
+                           journal = "TBC",
+                           volume = "TBC",
+                           page = "TBC",
+                           year = "2024",
+                           doi = "TBC",
+                           link = "TBC",
+                           shiny_title = "My Shiny",
+                           
+                                  # Volcano plot parameters
+       volcano_mode = c("overall", "clusterwise"),
+       volcano_plotheight = 6,
+       volcano_plotwidth = 8,
+       volcano_additional_p_adjust = FALSE,
+       volcano_p_adjust_method = "BH",
+       
+       # Manuscript generation parameters
+       manuscript_generation = FALSE,
+       manuscript_title = NULL,
+       manuscript_author = NULL,
+       manuscript_journal = "bioRxiv",
+       manuscript_llm_provider = "openai",
+       manuscript_api_key = NULL,
+       manuscript_model = "gpt-4",
+       manuscript_max_tokens = 4000,
+       manuscript_temperature = 0.7,
+       manuscript_include_figures = TRUE,
+       manuscript_focus_genes = "condition",
+       manuscript_min_logfc = 0.5,
+       manuscript_max_pvalue = 0.05,
+       manuscript_auto_load_env = TRUE
                            
                            #Generating Shiny app
-                           
-                           
-                           
                            ){
-  tryCatch({
+  {
     save_dir_save <- save_dir
-  
+    
+    # Set species-specific parameters
+    if(is.null(org_use)) {
+      org_use <- get_organism_db(species)
+    }
+    
+    if(is.null(tissue_ref_annotation)) {
+      tissue_ref_annotation <- get_tissue_reference(species, "Brain")  # Default to Brain, but could be made configurable
+    }
+    
+    # Validate species support
+    if(!is_species_supported(species)) {
+      warning(paste("Species", species, "may not be fully supported. Using human defaults as fallback."))
+    }
   
   
     # Perform standard Seurat processing
@@ -394,6 +476,28 @@ quick_RNAseqEr <- function(seur_obj,
                         n_col = 4)
       }
     }
+    
+    # Generate volcano plots for condition markers
+    print("Step 6/8: Generating volcano plots for condition markers...")
+    
+    # Read in the condition marker results for volcano plotting
+    cond_mark_dir <- paste0(save_dir, "/outs/", dir_lab, "/tables/condition_mark/RNAseqEr_annotation")
+    
+    if(dir.exists(cond_mark_dir)) {
+      # Generate volcano plots based on specified modes
+      for(mode in volcano_mode) {
+                 volcano_seqEr(dge_res = cond_genes,
+                       clu_col = "cluster",
+                       condition_label = "condition",
+                       mode = mode,
+                       save_dir = save_dir,
+                       conditions = milo_test_fact,
+                       plotheight = volcano_plotheight,
+                       plotwidth = volcano_plotwidth,
+                       additional_p_adjust = volcano_additional_p_adjust,
+                       p_adjust_method = volcano_p_adjust_method)
+      }
+    }
   
     # Now that we have a resolution for the dataset that enabled a preliminary annotatoion,
     # let's subset for the main clusters (as in cell lineages) and look for
@@ -505,9 +609,19 @@ quick_RNAseqEr <- function(seur_obj,
   
       curr_srt$cluster_id <- paste0(cell_lineage_name, "_", curr_srt@meta.data[[keep_res]])
   
-      DimPlot(curr_srt, group.by = "cluster_id", label = TRUE, cols = colour_palette())
-  
-      #TO DO SAVE THE PLOT ABOVE
+            # Save the final clustering plot
+      final_cluster_plot <- DimPlot(curr_srt, group.by = "cluster_id", label = TRUE, cols = colour_palette())
+      
+      # Save the plot
+      cluster_plot_dir <- paste0(save_dir, "/outs/", cell_lineage_name, "/plots/final_clustering/")
+      if(dir.exists(cluster_plot_dir) == FALSE){
+        dir.create(cluster_plot_dir, recursive = TRUE)
+      }
+      
+      pdf(paste0(cluster_plot_dir, "final_clustering_", cell_lineage_name, ".pdf"), 
+          width = 10, height = 8)
+      print(final_cluster_plot)
+      dev.off()
   
   
       curr_srt <- cluster_qc(seur_obj = curr_srt,
@@ -683,7 +797,20 @@ quick_RNAseqEr <- function(seur_obj,
                                       comp_mode = comp_modes[v],
                                       conditions = milo_test_fact,
                                       cluster_label = "cell_lineage")
-      ## ADD here that curr_mark list is plotted as volcano
+      
+             # Generate volcano plots for condensed marklists
+       if(nrow(curr_mark) > 0) {
+         volcano_seqEr(dge_res = curr_mark,
+                       clu_col = "cluster_id",
+                       condition_label = "condition",
+                       mode = comp_modes[v],
+                       save_dir = save_dir,
+                       conditions = milo_test_fact,
+                       plotheight = volcano_plotheight,
+                       plotwidth = volcano_plotwidth,
+                       additional_p_adjust = volcano_additional_p_adjust,
+                       p_adjust_method = volcano_p_adjust_method)
+       }
   
     }
   
@@ -696,34 +823,70 @@ quick_RNAseqEr <- function(seur_obj,
     saveRDS(seur_obj, paste0(proc_dat_dir_all, "/", dir_lab, ".RDS"))
   
   
-    # build shiny
-  
-  
+        # build shiny
+    
+    # Handle default_1 and default_2 intelligently
+    if(is.null(default_1)) {
+      # Use 4th metadata column if available
+      meta_cols <- colnames(seur_obj@meta.data)
+      if(length(meta_cols) >= 4) {
+        default_1 <- meta_cols[4]
+      } else {
+        default_1 <- meta_cols[1]  # fallback to first column
+      }
+    } else if(is.numeric(default_1)) {
+      # Use the specified column index
+      meta_cols <- colnames(seur_obj@meta.data)
+      if(default_1 <= length(meta_cols)) {
+        default_1 <- meta_cols[default_1]
+      } else {
+        default_1 <- meta_cols[1]  # fallback to first column
+      }
+    }
+    
+    if(is.null(default_2)) {
+      # Use 5th metadata column if available
+      meta_cols <- colnames(seur_obj@meta.data)
+      if(length(meta_cols) >= 5) {
+        default_2 <- meta_cols[5]
+      } else {
+        default_2 <- meta_cols[1]  # fallback to first column
+      }
+    } else if(is.numeric(default_2)) {
+      # Use the specified column index
+      meta_cols <- colnames(seur_obj@meta.data)
+      if(default_2 <= length(meta_cols)) {
+        default_2 <- meta_cols[default_2]
+      } else {
+        default_2 <- meta_cols[1]  # fallback to first column
+      }
+    }
+
     create_shiny(seur_obj,
-                 shiny_name = "all_celltypes",
-                 read_file = TRUE,
+                 shiny_name = shiny_name,
+                 read_file = read_file,
                  file_dir_1 = proc_dat_dir_all,
                  file_dir_2 = proc_dat_dir,
-                 ext_pattern = ".RDS",
-                 default_1 = "AgeGroup",
-                 default_2 = "Tissue",
-                 assay_use = "RNA",
-                 gex_slot = c("data", "scale.data", "counts"),
-                 gene_mapping = FALSE,
-                 default_gene1 = "MALAT1",
-                 default_gene2 = "GAPDH",
-                 save_dir = getwd(),
-                 default_multigene = NA,
-                 default_dimred = c("umap1", "umap2"),
-                 author = "Luise A. Seeker",
-                 title = "RNAseqEr: Fast and reproducible sc/snRNAseq data analysis",
-                 journal = "Bioinformatics",
-                 volume  = "1",
-                 page    = "1",
-                 year    = "2024",
-                 doi     = "https://doi.org/10.1093/bioinformatics/xxx",
-                 link    = "https://github.com/LASeeker/RNAseqEr",
-                 shiny_title = "My Shiny"
+                 ext_pattern = ext_pattern,
+                 default_1 = default_1,
+                 default_2 = default_2,
+                 assay_use = assay_use_shiny,
+                 gex_slot = gex_slot,
+                 gene_mapping = gene_mapping,
+                 default_gene1 = default_gene1,
+                 default_gene2 = default_gene2,
+                 save_dir = save_dir,
+                 default_multigene = default_multigene,
+                 default_dimred = default_dimred,
+                 author = author,
+                 title = title,
+                 journal = journal,
+                 volume = volume,
+                 page = page,
+                 year = year,
+                 doi = doi,
+                 link = link,
+                 shiny_title = shiny_title
     )
   
   
@@ -745,7 +908,11 @@ quick_RNAseqEr <- function(seur_obj,
       pure_thres = 0.96,  # Default from max_pure function
       weight_factor = 22,  # Default from max_pure function
       ad_pval = ad_pval,
-      avg_log = avg_log
+      avg_log = avg_log,
+      # Volcano plot parameters
+      volcano_mode = volcano_mode,
+      volcano_additional_p_adjust = volcano_additional_p_adjust,
+      volcano_p_adjust_method = volcano_p_adjust_method
     )
     
     # Generate reports
@@ -759,22 +926,50 @@ quick_RNAseqEr <- function(seur_obj,
                                 tissue_type = tissue_ref_annotation,
                                 species = "Human")
     
+    # Generate manuscript draft if requested
+    if(!is.null(manuscript_generation) && manuscript_generation) {
+      print("Step 9/9: Generating manuscript draft...")
+      
+      manuscript_dir <- generate_manuscript(save_dir = save_dir,
+                                          dir_lab = dir_lab,
+                                          conditions_of_interest = milo_test_fact,
+                                          tissue_type = tissue_ref_annotation,
+                                          species = species,
+                                          project_title = manuscript_title,
+                                          researcher_name = manuscript_author,
+                                          journal_target = manuscript_journal,
+                                          llm_provider = manuscript_llm_provider,
+                                          api_key = manuscript_api_key,
+                                          model_name = manuscript_model,
+                                          max_tokens = manuscript_max_tokens,
+                                          temperature = manuscript_temperature,
+                                          include_figures = manuscript_include_figures,
+                                          focus_on_genes = manuscript_focus_genes,
+                                          min_logfc = manuscript_min_logfc,
+                                          max_pvalue = manuscript_max_pvalue,
+                                          auto_load_env = manuscript_auto_load_env)
+    }
+    
     # At the end, print a summary
     cat("\n=== RNAseqEr Analysis Complete ===\n")
     cat("Output saved to:", save_dir, "\n")
     cat("Shiny app created in: shiny_app/\n")
     cat("Processed data saved to: outs/data/processed/\n")
     cat("Analysis reports saved to:", report_dir, "\n")
+    if(!is.null(manuscript_generation) && manuscript_generation) {
+      cat("Manuscript draft saved to:", manuscript_dir, "\n")
+    }
     cat("\nReports generated:")
     cat("- methods_report.md (Methods section for papers)")
     cat("- decision_justifications.md (Justifications for analysis decisions)")
     cat("- complete_analysis_report.md (Combined report)")
+    if(!is.null(manuscript_generation) && manuscript_generation) {
+      cat("- manuscript_draft.md (LLM-generated manuscript draft)")
+      cat("- figure_selection.md (Selected plots for figures)")
+      cat("- summary_statistics.md (Key statistics and results)")
+    }
   
     return(seur_obj)
-    }, error = function(e) {
-      message("Error in quick_RNAseqEr: ", e$message)
-      message("Saving partial results...")
-      # Save what we have so far
-      return(seur_obj)
-    })
   }
+}
+}
