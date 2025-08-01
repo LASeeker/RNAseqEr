@@ -63,7 +63,11 @@ adapted ScType algorithm
 10) Building of a shiny app
 
 11) writing of a summary report that describes what has been done, what the 
-results are and where to find them. 
+results are and where to find them.
+
+12) (Optional) LLM-powered manuscript draft generation that analyzes results 
+and creates a first draft of a scientific manuscript, focusing on the most 
+biologically relevant findings. 
 
 
 The processed Seurat objects are saved which enables the addition of other 
@@ -401,6 +405,57 @@ list.files(here("outs", "Oligodendrocytes", "tables", "cluster_marker", "overall
 The function above generates two outputs for each resolution, one set for unfiltered ("all")
 and one for further filtered ("fil") values that can be tweaked in the function arguments.
 
+## Data Validation and Safeguards for Small Datasets
+
+RNAseqEr includes comprehensive safeguards for small datasets to prevent analysis failures:
+
+### **Dataset Size Analysis**
+The workflow automatically analyzes your dataset size and provides recommendations:
+
+```{r, eval = FALSE}
+# Analyze dataset size and get recommendations
+size_analysis <- analyze_dataset_size(seur_obj, verbose = TRUE)
+```
+
+### **Cluster Size Validation**
+Before performing differential expression analysis, the workflow validates cluster sizes:
+
+```{r, eval = FALSE}
+# Validate cluster sizes for a specific resolution
+validation <- validate_cluster_sizes(seur_obj, "RNA_snn_res.0.8", 
+                                   min_cells_per_cluster = 3,
+                                   min_cells_for_comparison = 5)
+```
+
+### **Automatic Filtering**
+If clusters have too few cells, they are automatically filtered out:
+
+```{r, eval = FALSE}
+# Filter out small clusters
+filtered_obj <- filter_small_clusters(seur_obj, "RNA_snn_res.0.8", 
+                                     min_cells_per_cluster = 3)
+```
+
+### **Safe Differential Expression**
+The workflow uses safe differential expression analysis with error handling:
+
+```{r, eval = FALSE}
+# Safe differential expression with validation
+safe_result <- safe_differential_expression(seur_obj, "RNA_snn_res.0.8",
+                                          min_cells_per_cluster = 3,
+                                          min_cells_for_comparison = 5)
+```
+
+### **Size-Based Parameter Adjustment**
+For very small datasets (< 100 cells), the workflow automatically adjusts parameters:
+- Uses higher clustering resolution (0.1-0.5)
+- Sets minimum 3 cells per cluster
+- Uses Wilcoxon test instead of MAST
+- Provides warnings about statistical reliability
+
+### **Error Handling**
+The workflow gracefully handles analysis failures and provides informative messages about why certain steps were skipped.
+
 We also add a pairwise comparison of clusters:
 
 
@@ -731,9 +786,26 @@ relevance (fold change). The `volcano_seqEr` function can create volcano plots
 that show multiple comparisons in a single plot, making it easy to identify 
 genes that are differentially expressed across different conditions.
 
+## Understanding Volcano Plots
+
+Volcano plots display:
+- **X-axis**: Log fold change (biological significance)
+- **Y-axis**: -log10(p-value) (statistical significance)
+- **Red points**: Significantly upregulated genes
+- **Blue points**: Significantly downregulated genes
+- **Gray points**: Non-significant genes
+
+## Volcano Plot Modes
+
 The function can work in two modes:
 - **"overall" mode**: Shows all cell types together in one plot
 - **"clusterwise" mode**: Creates separate plots for each cell type
+
+## Multiple Testing Correction
+
+The function supports two levels of p-value adjustment:
+1. **Primary adjustment**: Seurat's Bonferroni correction within each comparison
+2. **Additional adjustment**: Optional correction across all comparisons (e.g., BH method)
 
 ```{r, eval = FALSE}
 # Generate volcano plots for condition markers
@@ -793,6 +865,57 @@ go_results <- perform_go(cns,
 dotplot(go_results)
 
 ```
+# Report Generation
+
+RNAseqEr can automatically generate comprehensive analysis reports that document the workflow, decisions, and results. This is particularly useful for reproducibility and for early career researchers who need to justify their analytical choices.
+
+## Generate Analysis Reports
+
+The `generate_report()` function creates detailed reports in two parts:
+
+1. **Methods Report**: A comprehensive description of the analysis workflow
+2. **Decision Justifications**: Detailed explanations for key analytical decisions
+
+```{r, eval = FALSE}
+# Generate comprehensive analysis reports
+generate_report(seur_obj = cns,
+               save_dir = "../",
+               dir_lab = "all_celltypes",
+               workflow_params = list(n_pcs = 20, res = c(0.1, 0.2, 0.3)),
+               researcher_name = "Student Name",
+               project_title = "Single-cell analysis of brain tissue",
+               tissue_type = "Brain",
+               species = "Human")
+```
+
+The reports include:
+- **Dataset size analysis and validation safeguards**
+- **Clustering resolution selection rationale**
+- **Statistical testing and multiple testing correction details**
+- **Quality control decisions and justifications**
+- **Differential expression analysis parameters**
+- **Gene ontology analysis settings**
+
+Reports are saved in the `outs/reports/` directory as:
+- `methods_report.md`: Detailed methods description
+- `decision_justifications.md`: Analysis decision explanations
+- `complete_analysis_report.md`: Combined comprehensive report
+
+## Manual Report Generation
+
+You can also generate reports manually for specific analyses:
+
+```{r, eval = FALSE}
+# For cell lineage analysis
+generate_report(seur_obj = seur,
+               save_dir = "../",
+               dir_lab = "Oligodendrocytes",
+               workflow_params = list(min_cells_per_cluster = 3),
+               researcher_name = "Researcher Name",
+               project_title = "Oligodendrocyte subclustering analysis",
+               tissue_type = "Brain")
+```
+
 #Generation of a Shiny app
 
 ```{r}
@@ -897,6 +1020,49 @@ result <- quick_RNAseqEr(cns,
 ```
 API_KEY_GPT4=your-openai-api-key-here
 ANTHROPIC_API_KEY=your-anthropic-api-key-here
+```
+
+## Standalone Manuscript Generation
+
+You can also generate manuscripts from existing analysis results without running the full workflow:
+
+### **Full Control Function**
+```{r, eval = FALSE}
+# Generate manuscript from existing analysis
+manuscript_dir <- generate_manuscript_standalone(
+  save_dir = "analysis_results",
+  dir_lab = "all_celltypes",
+  conditions_of_interest = c("AgeGroup", "Tissue"),
+  project_title = "Age-related changes in brain tissue",
+  researcher_name = "Dr. Smith",
+  journal_target = "Nature Communications",
+  llm_provider = "openai",
+  api_key = "your-api-key-here"
+)
+```
+
+### **Quick Manuscript Generation**
+```{r, eval = FALSE}
+# Simplified manuscript generation with auto-detection
+manuscript_dir <- quick_manuscript(
+  save_dir = "analysis_results",
+  project_title = "My Single-cell Analysis",
+  researcher_name = "Dr. Smith"
+)
+```
+
+### **Check Prerequisites**
+```{r, eval = FALSE}
+# Validate that required files exist
+validation <- check_manuscript_prerequisites("analysis_results", "all_celltypes")
+if(validation$ready) {
+  generate_manuscript_standalone("analysis_results")
+} else {
+  cat("Missing prerequisites. Recommendations:\n")
+  for(rec in validation$recommendations) {
+    cat("- ", rec, "\n")
+  }
+}
 ```
 
 ## Multi-Species Support
@@ -1089,6 +1255,88 @@ outs/
 **Applications:**
 - `shiny_app/`: Interactive web application for data exploration
 - `reports/`: Comprehensive analysis reports
+
+# Additional Utility Functions
+
+RNAseqEr includes several utility functions that can be helpful for specific analysis needs:
+
+## Cluster Management
+
+### Remove Clusters
+```{r, eval = FALSE}
+# Remove specific clusters from analysis
+filtered_obj <- remove_clu(seur_obj = seur,
+                           clusters_to_remove = c("cluster_1", "cluster_2"),
+                           cluster_col = "cluster_id")
+```
+
+### Select Resolution
+```{r, eval = FALSE}
+# Automatically select optimal clustering resolution
+selected_res <- select_res(seur_obj = seur,
+                          col_pattern = "RNA_snn_res.")
+```
+
+## Quality Assessment
+
+### Silhouette Plot
+```{r, eval = FALSE}
+# Generate silhouette plots for cluster quality assessment
+sil_plot(seur_obj = seur,
+         cluster_col = "cluster_id",
+         save_dir = "../")
+```
+
+### Cluster Purity Analysis
+```{r, eval = FALSE}
+# Analyze cluster purity at different resolutions
+cluster_purity(seur_obj = seur,
+               reduction = "umap",
+               col_pattern = "RNA_snn_res.",
+               save_dir = "../")
+```
+
+### Approximate Silhouette
+```{r, eval = FALSE}
+# Calculate approximate silhouette scores
+approx_sil(seur_obj = seur,
+           cluster_col = "cluster_id",
+           reduction = "umap")
+```
+
+## Data Processing
+
+### Fine Annotation
+```{r, eval = FALSE}
+# Perform fine-grained cell type annotation
+fine_annotate(seur_obj = seur,
+              cluster_col = "cluster_id",
+              tissue_ref = "Brain")
+```
+
+### Condense Marker Lists
+```{r, eval = FALSE}
+# Condense multiple marker gene lists
+condensed_markers <- condense_marklists(marker_lists = list(markers1, markers2),
+                                       top_n = 10)
+```
+
+### Minimum Difference Heatmap
+```{r, eval = FALSE}
+# Create heatmaps showing minimum differences between clusters
+minimum_diff_heatmap(seur_obj = seur,
+                     cluster_col = "cluster_id",
+                     genes = marker_genes,
+                     save_dir = "../")
+```
+
+## Color Utilities
+
+### Color Palette
+```{r, eval = FALSE}
+# Get consistent color palette for plots
+colors <- colour_palette()
+```
 
 # Session Info
 

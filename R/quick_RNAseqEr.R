@@ -253,6 +253,10 @@ quick_RNAseqEr <- function(seur_obj,
        volcano_additional_p_adjust = FALSE,
        volcano_p_adjust_method = "BH",
        
+       # Data validation parameters for small datasets
+       min_cells_per_cluster = 3,
+       min_cells_for_comparison = 5,
+       
        # Manuscript generation parameters
        manuscript_generation = FALSE,
        manuscript_title = NULL,
@@ -287,11 +291,22 @@ quick_RNAseqEr <- function(seur_obj,
     if(!is_species_supported(species)) {
       warning(paste("Species", species, "may not be fully supported. Using human defaults as fallback."))
     }
+    
+    # Analyze dataset size and provide recommendations
+    print("Step 0/8: Analyzing dataset size...")
+    size_analysis <- analyze_dataset_size(seur_obj, verbose = TRUE)
+    
+    # Adjust parameters based on dataset size if needed
+    if(size_analysis$size_category == "very_small") {
+      cat("⚠️  Very small dataset detected. Adjusting parameters for reliability...\n")
+      min_cells_per_cluster <- max(min_cells_per_cluster, 3)
+      min_cells_for_comparison <- max(min_cells_for_comparison, 5)
+    }
   
   
     # Perform standard Seurat processing
   
-    print("Step 1/8: Performing Seurat processing...")
+    print("Step 1/9: Performing Seurat processing...")
     seur_obj <- seurat_proc(seur_obj,
                             n_pcs = n_pcs,
                             res = res,
@@ -307,7 +322,7 @@ quick_RNAseqEr <- function(seur_obj,
     # save to file
   
   
-    print("Step 2/8: Plotting dimensional reductions...")
+    print("Step 2/9: Plotting dimensional reductions...")
     plot_list(seur_obj = seur_obj,
               col_pattern = col_pattern,
               plot_cols = plot_cols ,
@@ -322,7 +337,7 @@ quick_RNAseqEr <- function(seur_obj,
     # Calculate and plot cluster purity measures
   
   
-    print("Step 3/8: Calculating cluster purity...")
+    print("Step 3/9: Calculating cluster purity...")
     clu_pure(seur_obj,
              reduction = use_reduction, #reduction_sil,
              col_pattern = col_pattern,
@@ -478,7 +493,7 @@ quick_RNAseqEr <- function(seur_obj,
     }
     
     # Generate volcano plots for condition markers
-    print("Step 6/8: Generating volcano plots for condition markers...")
+    print("Step 6/9: Generating volcano plots for condition markers...")
     
     # Read in the condition marker results for volcano plotting
     cond_mark_dir <- paste0(save_dir, "/outs/", dir_lab, "/tables/condition_mark/RNAseqEr_annotation")
@@ -548,13 +563,17 @@ quick_RNAseqEr <- function(seur_obj,
                                        int_cols = keep_res_ul,
                                        save_dir = save_dir,
                                        dir_lab = cell_lineage_name,
-                                       assay_use = if(sketch) sketched_assay_name else assay_use)
+                                       assay_use = if(sketch) sketched_assay_name else assay_use,
+                                       min_cells_per_cluster = min_cells_per_cluster,
+                                       min_cells_for_comparison = min_cells_for_comparison)
   
       pw_mark <- pairwise_dge(seur_obj = curr_srt,
                               int_cols = keep_res_ul,
                               save_dir = save_dir,
                               dir_lab = cell_lineage_name,
-                              assay_use = if(sketch) sketched_assay_name else assay_use)
+                              assay_use = if(sketch) sketched_assay_name else assay_use,
+                              min_cells_per_cluster = min_cells_per_cluster,
+                              min_cells_for_comparison = min_cells_for_comparison)
   
       save_path_o <- paste0(save_dir,
                           "/outs/",
@@ -891,7 +910,7 @@ quick_RNAseqEr <- function(seur_obj,
   
   
     # Generate comprehensive analysis report
-    print("Step 8/8: Generating analysis reports...")
+    print("Step 8/9: Generating analysis reports...")
     
     # Collect workflow parameters for the report
     workflow_params <- list(

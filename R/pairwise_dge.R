@@ -46,7 +46,10 @@ pairwise_dge <- function(seur_obj,
                          save_dir = getwd(),
                          test_use = "MAST",
                          assay_use = "RNA",
-                         dir_lab = "all_celltypes") {
+                         dir_lab = "all_celltypes",
+                         min_cells_per_cluster = 3,
+                         min_cells_for_comparison = 5,
+                         verbose = TRUE) {
   save_path <- paste0(save_dir,
                       "/outs/",
                       dir_lab,
@@ -59,33 +62,87 @@ pairwise_dge <- function(seur_obj,
 
   for (k in 1:length(int_cols)) {
     curr_res <- int_cols[k]
-    Idents(seur_obj) <- curr_res
+    
+    # Validate cluster sizes before analysis
+    validation <- validate_cluster_sizes(seur_obj, curr_res, 
+                                        min_cells_per_cluster, min_cells_for_comparison)
+    
+    if(verbose) {
+      cat("=== Pairwise DGE Analysis for", curr_res, "===\n")
+      cat("Total cells:", validation$total_cells, "\n")
+      cat("Number of clusters:", validation$n_clusters, "\n")
+      cat("Valid clusters:", validation$n_valid_clusters, "\n")
+    }
+    
+    # Check if analysis is feasible
+    if(!validation$feasible) {
+      if(verbose) {
+        cat("❌ Skipping pairwise DGE for", curr_res, ": insufficient cells/clusters\n")
+      }
+      next
+    }
+    
+    # Filter small clusters if needed
+    if(validation$recommendations$action == "filter_clusters") {
+      if(verbose) {
+        cat("⚠️  Filtering small clusters for", curr_res, "\n")
+      }
+      filtered_obj <- filter_small_clusters(seur_obj, curr_res, min_cells_per_cluster, verbose)
+      if(is.null(filtered_obj)) {
+        if(verbose) {
+          cat("❌ Skipping pairwise DGE for", curr_res, ": no valid clusters after filtering\n")
+        }
+        next
+      }
+      analysis_obj <- filtered_obj
+    } else {
+      analysis_obj <- seur_obj
+    }
+    
+    Idents(analysis_obj) <- curr_res
+    
     # create all pairwise combinations at the picked resolution
-    clust_id_list <- combn(levels(as.factor(seur_obj@meta.data[[curr_res]])), 2)
+    clust_id_list <- combn(levels(as.factor(analysis_obj@meta.data[[curr_res]])), 2)
+    
+    if(verbose) {
+      cat("Performing", ncol(clust_id_list), "pairwise comparisons...\n")
+    }
+    
     for (i in 1:ncol(clust_id_list)) {
-      clust_mark <- FindMarkers(seur_obj,
-        ident.1 = clust_id_list[, i][[1]],
-        ident.2 = clust_id_list[, i][[2]],
-        min.pct = min_pct,
-        test.use = test_use,
-        assay = assay_use,
-        verbose = FALSE
-      )
-      clust_mark$cluster <- clust_id_list[, i][[1]]
-      clust_mark$comp_to_clust <- clust_id_list[, i][[2]]
-      write.csv(
-        clust_mark,
-        paste(save_path,
-          "/",
-          int_cols[k],
-          "_",
-          clust_id_list[, i][[1]],
-          "_",
-          clust_id_list[, i][[2]],
-          ".csv",
-          sep = ""
+      tryCatch({
+        clust_mark <- FindMarkers(analysis_obj,
+          ident.1 = clust_id_list[, i][[1]],
+          ident.2 = clust_id_list[, i][[2]],
+          min.pct = min_pct,
+          test.use = test_use,
+          assay = assay_use,
+          verbose = FALSE
         )
-      )
+        clust_mark$cluster <- clust_id_list[, i][[1]]
+        clust_mark$comp_to_clust <- clust_id_list[, i][[2]]
+        write.csv(
+          clust_mark,
+          paste(save_path,
+            "/",
+            int_cols[k],
+            "_",
+            clust_id_list[, i][[1]],
+            "_",
+            clust_id_list[, i][[2]],
+            ".csv",
+            sep = ""
+          )
+        )
+        
+        if(verbose) {
+          cat("✅ Comparison", i, "/", ncol(clust_id_list), "completed\n")
+        }
+        
+      }, error = function(e) {
+        if(verbose) {
+          cat("❌ Error in comparison", i, ":", e$message, "\n")
+        }
+      })
     }
   }
 }

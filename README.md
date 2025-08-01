@@ -56,6 +56,10 @@ The workflow consists of:
 11. **Writing of a summary report** that describes what has been done, what
     the results are and where to find them.
 
+12. **(Optional) LLM-powered manuscript draft generation** that analyzes results 
+    and creates a first draft of a scientific manuscript, focusing on the most 
+    biologically relevant findings.
+
 The processed Seurat objects are saved which enables the addition of
 other tailored analyses.
 
@@ -130,6 +134,61 @@ result <- quick_RNAseqEr(data,
                          manuscript_generation = TRUE,
                          manuscript_llm_provider = "openai")
 ```
+
+### **Standalone Manuscript Generation:**
+
+You can also generate manuscripts from existing analysis results:
+
+```r
+# Full control function
+manuscript_dir <- generate_manuscript_standalone(
+  save_dir = "analysis_results",
+  conditions_of_interest = c("AgeGroup", "Tissue"),
+  project_title = "My Analysis",
+  researcher_name = "Dr. Smith"
+)
+
+# Quick manuscript with auto-detection
+manuscript_dir <- quick_manuscript(
+  save_dir = "analysis_results",
+  project_title = "My Analysis",
+  researcher_name = "Dr. Smith"
+)
+
+# Check prerequisites first
+validation <- check_manuscript_prerequisites("analysis_results")
+```
+
+## Data Validation and Small Dataset Safeguards
+
+RNAseqEr includes comprehensive safeguards for small datasets to prevent analysis failures:
+
+### **Dataset Size Analysis**
+- Automatically analyzes dataset size and provides recommendations
+- Adjusts parameters based on dataset size (very small: <100 cells, small: <1000 cells, etc.)
+- Provides warnings about statistical reliability for very small datasets
+
+### **Cluster Size Validation**
+- Validates cluster sizes before differential expression analysis
+- Configurable minimum cells per cluster (default: 3)
+- Configurable minimum cells for pairwise comparisons (default: 5)
+
+### **Automatic Filtering**
+- Automatically filters out clusters with insufficient cells
+- Provides informative messages about filtering decisions
+- Gracefully handles analysis failures
+
+### **Safe Differential Expression**
+- Uses error handling for all differential expression analyses
+- Skips analyses when insufficient data is available
+- Provides detailed progress information
+
+### **Size-Based Parameter Adjustment**
+For very small datasets (< 100 cells):
+- Uses higher clustering resolution (0.1-0.5)
+- Sets minimum 3 cells per cluster
+- Uses Wilcoxon test instead of MAST
+- Provides warnings about statistical reliability
 
 ## Multi-Species Support
 
@@ -646,6 +705,42 @@ save_feat_plots(cns,
                 save_dir = "../")
 ```
 
+## Report Generation
+
+RNAseqEr can automatically generate comprehensive analysis reports that document the workflow, decisions, and results. This is particularly useful for reproducibility and for early career researchers who need to justify their analytical choices.
+
+### Generate Analysis Reports
+
+The `generate_report()` function creates detailed reports in two parts:
+
+1. **Methods Report**: A comprehensive description of the analysis workflow
+2. **Decision Justifications**: Detailed explanations for key analytical decisions
+
+```r
+# Generate comprehensive analysis reports
+generate_report(seur_obj = cns,
+               save_dir = "../",
+               dir_lab = "all_celltypes",
+               workflow_params = list(n_pcs = 20, res = c(0.1, 0.2, 0.3)),
+               researcher_name = "Student Name",
+               project_title = "Single-cell analysis of brain tissue",
+               tissue_type = "Brain",
+               species = "Human")
+```
+
+The reports include:
+- **Dataset size analysis and validation safeguards**
+- **Clustering resolution selection rationale**
+- **Statistical testing and multiple testing correction details**
+- **Quality control decisions and justifications**
+- **Differential expression analysis parameters**
+- **Gene ontology analysis settings**
+
+Reports are saved in the `outs/reports/` directory as:
+- `methods_report.md`: Detailed methods description
+- `decision_justifications.md`: Analysis decision explanations
+- `complete_analysis_report.md`: Combined comprehensive report
+
 ## Gene ontology analysis
 
 It may also be useful to check whether there are certain pathways differentially 
@@ -751,6 +846,28 @@ outs/
 - `shiny_app/`: Interactive web application for data exploration
 - `reports/`: Comprehensive analysis reports
 - `manuscript/`: LLM-generated manuscript draft and figure selection
+- `data_validation/`: Dataset size analysis and cluster validation reports
+
+## Additional Utility Functions
+
+RNAseqEr includes several utility functions that can be helpful for specific analysis needs:
+
+### Cluster Management
+- `remove_clu()`: Remove specific clusters from analysis
+- `select_res()`: Automatically select optimal clustering resolution
+
+### Quality Assessment
+- `sil_plot()`: Generate silhouette plots for cluster quality assessment
+- `cluster_purity()`: Analyze cluster purity at different resolutions
+- `approx_sil()`: Calculate approximate silhouette scores
+
+### Data Processing
+- `fine_annotate()`: Perform fine-grained cell type annotation
+- `condense_marklists()`: Condense multiple marker gene lists
+- `minimum_diff_heatmap()`: Create heatmaps showing minimum differences between clusters
+
+### Color Utilities
+- `colour_palette()`: Get consistent color palette for plots
 
 ## Generation of a Shiny app
 

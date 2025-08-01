@@ -102,6 +102,8 @@ quick_RNAseqEr(
   volcano_plotwidth = 8,
   volcano_additional_p_adjust = FALSE,
   volcano_p_adjust_method = "BH",
+  min_cells_per_cluster = 3,
+  min_cells_for_comparison = 5,
   manuscript_generation = FALSE,
   manuscript_title = NULL,
   manuscript_author = NULL,
