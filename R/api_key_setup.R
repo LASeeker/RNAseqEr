@@ -53,8 +53,8 @@ test_api_key_setup <- function(api_key = NULL, provider = "openai") {
     set_api_key_manual(api_key, provider)
   }
   
-  # Test environment setup
-  env_status <- setup_rnaseqer_env(auto_load = FALSE)
+  # Test environment setup - actually load the environment
+  env_status <- setup_rnaseqer_env(auto_load = TRUE)
   
   # Test API key retrieval
   retrieved_key <- get_api_key(provider = provider)

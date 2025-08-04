@@ -105,14 +105,12 @@ The package comes with a dataset from the human CNS (Seeker et al. 2023) that
 includes different cell types from different CNS regions and different donor 
 age and sex groups. This data can be loaded with 
 
-```{r}
-cns
-```
-
-
-## Use wrapper function for the entire workflow
 ```{r, eval = FALSE}
+cns
 
+```
+## Use wrapper function for the entire workflow
+```{r}
 result <- quick_RNAseqEr(cns,
                          cluster_qc_vars = c("process_number", "caseNO", "Tissue"),
                          sample_id = "uniq_id",
@@ -122,26 +120,27 @@ result <- quick_RNAseqEr(cns,
                          volcano_mode = c("overall", "clusterwise"),
                          volcano_plotheight = 8,
                          volcano_plotwidth = 10,
-                         volcano_additional_p_adjust = TRUE,  # Additional p-value adjustment
-                         volcano_p_adjust_method = "BH",      # Benjamini-Hochberg method
+                         volcano_additional_p_adjust = TRUE,
+                         volcano_p_adjust_method = "BH",
                          # Shiny app customization
                          shiny_name = "my_analysis",
                          author = "Dr. Smith",
                          title = "My Single Cell Analysis",
-                         # Manuscript generation (optional)
+                         # Manuscript generation (now working)
                          manuscript_generation = TRUE,
                          manuscript_title = "Single-cell analysis reveals age-related changes in brain tissue",
                          manuscript_author = "Dr. Smith",
                          manuscript_journal = "Nature Communications",
                          manuscript_llm_provider = "openai",
-                         manuscript_api_key = "your-api-key-here",  # Set your API key
                          manuscript_model = "gpt-4",
                          manuscript_include_figures = TRUE,
                          manuscript_focus_genes = "condition",
                          manuscript_min_logfc = 0.5,
                          manuscript_max_pvalue = 0.05)
+
  
 ```
+
 
 ```{r, eval = FALSE}
 #For large datasets, use sketching
@@ -328,14 +327,13 @@ metadata column can be used for subsetting. Each cell lineage will be saved in
 a separate .RDS file.
 
 
-```{r}
+```{r, eval = FALSE}
 here("..")
 subset_RNAseqEr(cns, save_dir = here())
 
 list.files(here("outs", "data"))
 
 
-```
 
 ## Finer clustering
 
@@ -378,16 +376,17 @@ is negative for markers that characterise other clusters.
 
 So all potentially interesting resolutions can be used below:
 
-```{r}
+```{r, eval = FALSE}
 
-# Pick interesting resolutions
-int_resol <- c(0.1, 0.2, 0.3, 1, 1.3)
-int_res <- paste0("RNA_snn_res.", int_resol)
-
-```
-
+# Automatically select resolutions that changed clustering
+int_res <- select_res(seur, col_pattern = "RNA_snn_res.")
 
 ```{r, eval = TRUE, echo = FALSE, results = 'hide'}
+
+# Automatically select resolutions that changed clustering
+int_res <- select_res(seur, col_pattern = "RNA_snn_res.")
+# Convert list to character vector
+int_res <- unlist(int_res)
             
 all_res_mark <- int_res_all_mark(seur_obj = seur,
                                  int_cols = int_res,
@@ -397,10 +396,9 @@ all_res_mark <- int_res_all_mark(seur_obj = seur,
 ```
 
 
-```{r}
+```{r, eval = FALSE}
 # see the output 
 list.files(here("outs", "Oligodendrocytes", "tables", "cluster_marker", "overall"))
-```
 
 The function above generates two outputs for each resolution, one set for unfiltered ("all")
 and one for further filtered ("fil") values that can be tweaked in the function arguments.
@@ -483,7 +481,7 @@ user with a condensed list of the most interesting potential cluster markers whi
 are used to determine the similarity/ difference of clusters to find an appropriate
 clustering resolution.
 
-```{r}
+```{r, eval = TRUE, echo = FALSE, results = 'hide'}
 # Check if files exist before trying to read them
 overall_dir <- here("outs", "Oligodendrocytes", "tables", "cluster_marker", "overall")
 pairwise_dir <- here("outs", "Oligodendrocytes", "tables", "cluster_marker", "pairwise")
@@ -504,9 +502,8 @@ if(dir.exists(pairwise_dir) && length(list.files(pairwise_dir)) > 0) {
 
 int_genes <- c(clu_mark$gene, clu_mark_pw$gene)
 int_genes <- unique(int_genes)
+
 ```
-
-
 ## Identifying clusters that are too similar to find most appropriate resolution
 
 Below we use heatmaps to visually screen differences and similarities between
@@ -546,32 +543,30 @@ To look at the cluster similarity scores, inspect the dataframe below. It shows 
 in this case the resolution 1 may be the most appropriate. More generally we use the 
 highest resolution with the lowest cluster similarity score (tail(x,1)).
 
-```{r}
+```{r, eval = FALSE}
 df_seqEr
-```
 
 The below only works if there was some over-clustering and there is indeed one cluster
 with a minimum cluster similarity score. Alternatively this can be determined manually.
+``` 
 
 ```{r, eval = FALSE}
 res_df <- subset(df_seqEr, df_seqEr$cluster_sim_score == min(df_seqEr$cluster_sim_score))
 keep_res <- tail(res_df$resolution,1)
 ```
 
-```{r}
+```{r, eval = FALSE}
 keep_res <- "RNA_snn_res.1"
 
 ```
 
-
-```{r, fig.width = 8, fig.height = 5}
+```{r, eval = FALSE, fig.width = 8, fig.height = 5}
 Idents(seur) <- keep_res
 
 seur$cluster_id <- paste0("Oligodendrocytes_", seur@meta.data[[keep_res]])
 
 DimPlot(seur, group.by = "cluster_id", label = TRUE, cols = colour_palette())
 ```
-
 ## Cluster Quality control
 
 Sometimes individual samples can cluster separately from the rest which is 
@@ -589,7 +584,7 @@ genes up to the re-clustering.
 The function below can be used on any meta data column to test for cluster
 biased clustering. 
 
-```{r, fig.width = 8, fig.height = 5}
+```{r, eval = FALSE, fig.width = 8, fig.height = 5}
 seur <- cluster_qc(seur_obj = seur,
                    save_dir = save_dir,
                    cluster_col = "cluster_id",
@@ -598,7 +593,6 @@ seur <- cluster_qc(seur_obj = seur,
 
 
 ```
-
 
 # Differential abundance testing
 
@@ -609,7 +603,7 @@ statistically sound which is less trivial then it may appear at first.
 In our hands Milo (Ref) works well and we implemnted it here. We encourage the
 user to try and test other methods as well. 
 
-```{r, fig.width= 8, fig.height=5}
+```{r, eval = FALSE, fig.width= 8, fig.height=5}
 milo_obj <- abundance_test(seur_obj = seur,
                            cluster_col = "cluster_id",
                            sample_id = "uniq_id",
@@ -628,7 +622,6 @@ milo_obj <- abundance_test(seur_obj = seur,
                            prop = 0.1,       # Reduced from 0.2
                            refined = FALSE  #
                            )
-
 ```
 Differential abundance testing makes more sense for larger datasets. Therefore,
 I am showing it below for the cns dataset containing all  cell types.
@@ -681,7 +674,7 @@ The subsetted oligodendrocyte dataset is very small to test for differentially
 expressed genes. This is why we show the workflow downstream with the cns dataset.
 
 
-```{r}
+```{r, eval = FALSE}
 
 RNAseqEr::find_cond_markers(cns,
                   int_cols = c("AgeGroup","Tissue", "gender"),
@@ -693,7 +686,7 @@ RNAseqEr::find_cond_markers(cns,
 
 The example below shows how to collect data from the cluster-wise differential gene
 expression analysis that we performed above and plot them as violin plots. 
-```{r, fig.height= 50, fig.width=8}
+```{r, eval = FALSE, fig.height= 50, fig.width=8}
 library(here)
 cond_genes <- gen_mark_list(file_dir = here("outs", 
                                             "all_celltypes", 
@@ -725,12 +718,11 @@ save_vln(cns,
 
 
 
-```
 
 The same is also possible to perform on the overall differential gene expression
 analysis from above by pointing at the corresponding folder.
 
-```{r, plot.width = 8, plot.height = 30}
+```{r, eval = FALSE, plot.width = 8, plot.height = 30}
 cond_genes_ov <- gen_mark_list(file_dir = here("outs", 
                                             "all_celltypes", 
                                             "tables", 
@@ -762,12 +754,11 @@ save_vln(cns,
 
 
 
-```
 Similarly, Feature plots can be useful to look visualize differences in gene expression. 
 We can gene list above to visualize differences with a condition group such as tissue.
 
 
-```{r, plot.width = 8, plot.height = 30}
+```{r, eval = FALSE, plot.width = 8, plot.height = 30}
 save_feat_plots(cns, 
                 marker_list = tissue_mark$gene,
                 save_label = "Tissue_mark",

@@ -62,6 +62,7 @@ seurat_proc <- function(seur_obj,
   seur_obj <- Seurat::NormalizeData(seur_obj)
   print("Looking for variable genes.")
   seur_obj <- Seurat::FindVariableFeatures(seur_obj)
+  print("Save RDS data.")
   saveRDS(seur_obj, paste0(out_dat_dir, "processed_srt.RDS"))
   print("Scaling data.")
   scale_genes <- select_genes
