@@ -23,9 +23,9 @@ annotate_seqEr(
   plot_repel = TRUE,
   plot_width = 8,
   plot_height = 8,
-  dge_present = FALSE,
   dge = TRUE,
   proportion = 3,
+  unknown_threshold = 0.25,
   colours = colour_palette()
 )
 }
@@ -82,10 +82,6 @@ be repelled on DimPlots. Default is TRUE.}
 
 \item{plot_height}{height of DimPlot in output file. Default = 8.}
 
-\item{dge_present}{TRUE/FALSE if previously generated DGE results are present.
-Should be set to FALSE at each new tested ident_use for the first time, but
-can be set to TRUE thereafter to speed up process.}
-
 \item{dge}{TURE/FALSE whether differential gene expression should be performed.
 Default is TRUE, to allow for annotation of celltypes that were not annotated
 based on scType alone.}
@@ -95,6 +91,9 @@ means that the number differentially expressed genes in a cluster must be
 larger than a third of the total number of genes that define a cell type in scTypoe to
 be considered that cell type. Increasing the number makes annotation less stringent,
 decreasing it makes it more stringent.}
+
+\item{unknown_threshold}{threshold for what proportion of cells in a cluster
+should be "Unknown" before triggering additional annotation steps. Default is 0.25.}
 
 \item{colours}{Colours for DimPlots. Default is colour_pelette() from The RNAseqEr
 library}

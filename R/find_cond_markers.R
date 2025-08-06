@@ -23,6 +23,8 @@
 #' current working directory
 #' @param test_use statistical approach being used for differential gene expression
 #' analysis. Default is MAST.
+#' @param assay_use assay to use for differential gene expression analysis.
+#' Default is "RNA". For sketched data, use "sketch".
 #'
 #' @return saves lists of differentially expressed genes between conditions to
 #' folders
@@ -45,7 +47,8 @@ find_cond_markers <- function(seur_obj,
                              fil_pct_1 = 0.25,
                              fil_pct_2 = 0.6,
                              save_dir = getwd(),
-                             test_use = "MAST") {
+                             test_use = "MAST",
+                             assay_use = "RNA") {
   for (i in 1:length(int_cols)) {
     Idents(seur_obj) <- int_cols[i]
     if(length(levels(Idents(seur_obj))) > 1){
@@ -54,6 +57,7 @@ find_cond_markers <- function(seur_obj,
                                  min.pct = min_pct,
                                  logfc.threshold = logfc_threshold,
                                  test.use = test_use,
+                                 assay = assay_use,
                                  verbose = FALSE
       )
       fil_mark <- subset(
@@ -88,6 +92,7 @@ find_cond_markers <- function(seur_obj,
                                  min.pct = min_pct,
                                  logfc.threshold = logfc_threshold,
                                  test.use = test_use,
+                                 assay = assay_use,
                                  verbose = FALSE)
 
 

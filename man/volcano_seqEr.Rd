@@ -2,7 +2,7 @@
 % Please edit documentation in R/volcano_seqEr.R
 \name{volcano_seqEr}
 \alias{volcano_seqEr}
-\title{Function to plot summary volcano plots}
+\title{Generate volcano plots for differential gene expression results}
 \usage{
 volcano_seqEr(
   dge_res,
@@ -57,4 +57,47 @@ or which specific cluster of the cell lineage shows the strongest correlation.
 last_vol_plot <- volcano_seqEr(dge_res,
                                conditions = c("AgeGroup", "gender", "Tissue"),
                                save_plots = FALSE)
+=======
+  additional_p_adjust = FALSE,
+  p_adjust_method = "BH"
+)
+}
+\arguments{
+\item{dge_res}{data frame containing differential gene expression results}
+
+\item{clu_col}{column name for cluster information (default: "cluster_id")}
+
+\item{condition_label}{column name for condition information (default: "condition")}
+
+\item{mode}{analysis mode: "overall" or "clusterwise" (default: "overall")}
+
+\item{save_dir}{directory to save plots (default: getwd())}
+
+\item{conditions}{vector of conditions to analyze}
+
+\item{plotheight}{height of plots (default: 6)}
+
+\item{plotwidth}{width of plots (default: 8)}
+
+\item{additional_p_adjust}{whether to perform additional p-value adjustment across all comparisons (default: FALSE)}
+
+\item{p_adjust_method}{method for additional p-value adjustment: "bonferroni", "holm", "hochberg", "BH", "BY", "fdr" (default: "BH")}
+}
+\value{
+Saves volcano plots to the specified directory
+}
+\description{
+This function creates volcano plots for differential gene expression analysis results,
+showing multiple comparisons in a single plot. It can work in "overall" mode (all cell types together)
+or "clusterwise" mode (separate plots for each cell type).
+}
+\examples{
+\dontrun{
+volcano_seqEr(dge_res = condition_markers,
+              conditions = c("AgeGroup", "Tissue"),
+              mode = "overall",
+              save_dir = "results",
+              additional_p_adjust = TRUE,
+              p_adjust_method = "BH")
+}
 }

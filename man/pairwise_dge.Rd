@@ -15,7 +15,10 @@ pairwise_dge(
   save_dir = getwd(),
   test_use = "MAST",
   assay_use = "RNA",
-  dir_lab = "all_celltypes"
+  dir_lab = "all_celltypes",
+  min_cells_per_cluster = 3,
+  min_cells_for_comparison = 5,
+  verbose = TRUE
 )
 }
 \arguments{

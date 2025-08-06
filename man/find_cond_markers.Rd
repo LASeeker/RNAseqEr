@@ -15,7 +15,8 @@ find_cond_markers(
   fil_pct_1 = 0.25,
   fil_pct_2 = 0.6,
   save_dir = getwd(),
-  test_use = "MAST"
+  test_use = "MAST",
+  assay_use = "RNA"
 )
 }
 \arguments{
@@ -49,6 +50,9 @@ current working directory}
 
 \item{test_use}{statistical approach being used for differential gene expression
 analysis. Default is MAST.}
+
+\item{assay_use}{assay to use for differential gene expression analysis.
+Default is "RNA". For sketched data, use "sketch".}
 }
 \value{
 saves lists of differentially expressed genes between conditions to

@@ -2,12 +2,12 @@
 % Please edit documentation in R/quick_RNAseqEr.R
 \name{quick_RNAseqEr}
 \alias{quick_RNAseqEr}
-\title{Fast RNAseqER analysis of pre-processed single cell/ nuclei datasets}
+\title{Quick RNAseqEr: Complete workflow for single-cell RNA-seq analysis}
 \usage{
 quick_RNAseqEr(
   seur_obj,
+  species = "Human",
   n_pcs = 20,
-  nfeatures = 2000,
   res = c(0.005, 0.01, 0.04, 0.05, seq(from = 0.1, to = 1.5, by = 0.1)),
   select_genes = rownames(seur_obj),
   elbow_dims = 50,
@@ -35,16 +35,32 @@ quick_RNAseqEr(
   use_resol = FALSE,
   max_diff_threshold = 10,
   mean_diff_thres = 0.1,
+  int_cols_pw = "RNA_snn_res.1",
+  min_pct_pw = 0.25,
+  logfc_threshold_pw = 0.25,
+  fil_pct_1_pw = 0.25,
+  fil_pct_2_pw = 0.1,
+  assay_use = "RNA",
+  ad_pval = 0.05,
+  avg_log = 1.2,
+  pct_1 = 0.25,
+  pct_2 = 0.6,
+  n_top = 10,
+  use_resol = TRUE,
+  col_names = NA,
+  col_pattern_hm = "RNA_snn_res",
+  label_hm = TRUE,
+  draw_lines = FALSE,
   min_log2FC_go = 0.25,
   reverse_go = FALSE,
   translate_gene_id_from = "SYMBOL",
   translate_gene_id_to = "ENTREZID",
-  org_use = "org.Hs.eg.db",
+  org_use = NULL,
   ontology = "BP",
   pvalue_cutoff_go = 0.05,
   qvalue_cutoff_go = 0.05,
   read_able = TRUE,
-  tissue_ref_annotation = "Brain",
+  tissue_ref_annotation = NULL,
   min_pct_ann = 0.25,
   logfc_threshold_ann = 0.8,
   assay_use_ann = "RNA",
@@ -55,190 +71,278 @@ quick_RNAseqEr(
   plot_label_ann = TRUE,
   plot_repel_ann = TRUE,
   plot_width_ann = 8,
-  plot_height_ann = 6,
+  plot_height_ann = 8,
   dge_present_ann = FALSE,
   dge_ann = TRUE,
   proportion = 3,
   cluster_qc_vars,
   sample_id,
   cols_milo_design,
-  milo_test_fact
+  milo_test_fact,
+  sketch = FALSE,
+  sketch_ncells = 50000,
+  sketch_method = c("LeverageScore", "Uniform"),
+  sketched_assay_name = "sketch",
+  shiny_name = "all_celltypes",
+  read_file = TRUE,
+  ext_pattern = ".RDS",
+  default_1 = NULL,
+  default_2 = NULL,
+  assay_use_shiny = "RNA",
+  gex_slot = c("data", "scale.data", "counts"),
+  gene_mapping = FALSE,
+  default_gene1 = "MALAT1",
+  default_gene2 = "GAPDH",
+  default_multigene = NA,
+  default_dimred = c("umap1", "umap2"),
+  author = "My name",
+  title = "TBC",
+  journal = "TBC",
+  volume = "TBC",
+  page = "TBC",
+  year = "2024",
+  doi = "TBC",
+  link = "TBC",
+  shiny_title = "My Shiny",
+  volcano_mode = c("overall", "clusterwise"),
+  volcano_plotheight = 6,
+  volcano_plotwidth = 8,
+  volcano_additional_p_adjust = FALSE,
+  volcano_p_adjust_method = "BH",
+  min_cells_per_cluster = 3,
+  min_cells_for_comparison = 5,
+  manuscript_generation = FALSE,
+  manuscript_title = NULL,
+  manuscript_author = NULL,
+  manuscript_journal = "bioRxiv",
+  manuscript_llm_provider = "openai",
+  manuscript_api_key = NULL,
+  manuscript_model = "gpt-4",
+  manuscript_max_tokens = 4000,
+  manuscript_temperature = 0.7,
+  manuscript_include_figures = TRUE,
+  manuscript_focus_genes = "condition",
+  manuscript_min_logfc = 0.5,
+  manuscript_max_pvalue = 0.05,
+  manuscript_auto_load_env = TRUE
 )
 }
 \arguments{
-\item{seur_obj}{quality controlled Seurat object}
+\item{seur_obj}{Seurat object to analyze}
 
-\item{n_pcs}{number of Principal components used for dimensional reduction
-and clustering}
+\item{species}{Species analyzed (default: "Human")}
 
-\item{nfeatures}{number of variable features. Default is 2000.}
+\item{n_pcs}{number of principal components for analysis}
 
-\item{res}{resolutions that are being used for clustering. The default are the
-following: 0.005, 0.010, 0.040, 0.050, 0.100, 0.200, 0.300, 0.400, 0.500,
-0.600, 0.700, 0.800, 0.900, 1.000, 1.100, 1.200, 1.300, 1.400, 1.500}
+\item{res}{clustering resolutions to test}
 
-\item{select_genes}{which genes should be used for scaling. The default is
-all (rownames(seur_obj))}
+\item{select_genes}{genes to use for scaling}
 
-\item{elbow_dims}{number of dimensions plotted in Elbow plot to select principal
-components for dimensional reductions and clustering. The default is 50.}
+\item{elbow_dims}{dimensions for elbow plot}
 
-\item{tsne}{TRUE/FALSE whether or not TSNE should be performed. default is
-FALSE.}
+\item{tsne}{whether to run tSNE}
 
-\item{col_pattern}{column pattern used to detect meta data columns that contain
-cluster information. The default is "RNA_snn_res.".}
+\item{col_pattern}{pattern for clustering column names}
 
-\item{plot_cols}{string of colours used in plots. The default is RNAseqEr's
-colour_palette()}
+\item{plot_cols}{colors for plots}
 
-\item{clust_lab}{TRUE/FALSE whether or not cluster labels should be displayed in plot.
-The default is TRUE.}
+\item{clust_lab}{whether to show cluster labels}
 
-\item{label_size}{size of cluster labels (default 8)}
+\item{label_size}{size of labels}
 
-\item{save_dir}{path to root directory for analysis.}
+\item{save_dir}{directory to save results}
 
-\item{width}{plot width (7)}
+\item{width}{plot width}
 
-\item{height}{plot height (5)}
+\item{height}{plot height}
 
-\item{use_reduction}{which dimensiona reduction should be used. Default is "umap".}
+\item{use_reduction}{dimensional reduction to use}
 
-\item{dir_lab}{label for complete dataset. Default is "all_celltype". This can
-be freely chosen and will be used to generate file paths.}
+\item{dir_lab}{label for output directory}
 
-\item{weight_factor}{This is a factor used to calculate the maximum purity to
-determine a cluster resolution that separates physically distinct clusters
-in the umap space. The mean cluster purity is multiplied by the weight factor
-(default is 22) and then divided by the numbers of clusters. This favors
-clusters with a large purity over those with}
+\item{int_cols}{columns for differential expression analysis}
 
-\item{second_thres}{}
+\item{only_pos}{only positive markers}
 
-\item{int_cols}{columns of interest for the analysis. This could for example
-be the metadata column names corresponding to treatment vs. control identity,
-age group, tissue region, KO vs. control etc.}
+\item{min_pct}{minimum percentage of cells}
 
-\item{only_pos}{TRUE/FALSE whether only positive values should be considered
-in differential gene expression analyses. The default is TRUE.}
+\item{logfc_threshold}{log fold change threshold}
 
-\item{min_pct}{Minimum proportion of cells within the cluster/group of interest expressing
-the gene for gene to appear in the differential gene. Default is 0.25.}
+\item{fil_pct_1}{first percentage filter}
 
-\item{logfc_threshold}{Minimum log2PC for gene to appear in the differential gene
-expression analysis result. The default is 0.25.}
+\item{fil_pct_2}{second percentage filter}
 
-\item{fil_pct_1}{Filter parameter for the proportion of cells WITHIN the
-cluster/condition of interest expressing a certain genes of the differential gene
-expression analysis result. Default is 0.25 and thus does not filter.}
+\item{test_use}{statistical test to use}
 
-\item{fil_pct_2}{Filter parameter for the proportion of cells OUTSIDE the
-cluster/condition of interest expressing a certain genes of the differential gene
-expression analysis result. Default is 0.6.}
+\item{int_cols_pw}{columns for pairwise analysis}
 
-\item{test_use}{test to use for differential gene expression analysis. The
-default is "MAST" but all other methods implemented within Seurat work
-as alternatives.}
+\item{min_pct_pw}{minimum percentage for pairwise}
 
-\item{assay_use}{assay to use for differential gene expression analysis.
-The default is "RNA"}
+\item{logfc_threshold_pw}{log fold change threshold for pairwise}
 
-\item{use_resol}{TRUE/FALSE, Default is FALS}
+\item{fil_pct_1_pw}{first percentage filter for pairwise}
 
-\item{min_log2FC_go}{min log2 fold change that a gene needs to pass to be
-considered in a gene ontology analysis. Default is 0.25}
+\item{fil_pct_2_pw}{second percentage filter for pairwise}
 
-\item{reverse_go}{TRUE/FALSE EXPLAIN. Default is FALSE.}
+\item{assay_use}{assay to use}
 
-\item{translate_gene_id_from}{from which gene annotation should be translated.
-The default is "SYMBOL".}
+\item{ad_pval}{adjusted p-value threshold}
 
-\item{translate_gene_id_to}{To which gene annotation should be translated. The
-default is "ENTREZID"}
+\item{avg_log}{average log fold change}
 
-\item{org_use}{Organism used. The default is human ("org.Hs.eg.db")}
+\item{pct_1}{first percentage}
 
-\item{ontology}{What kind of gene ontology analysis is to be performed. The
-default is "BP" for biological process, but "MF" for molecular function is
-an option as well.}
+\item{pct_2}{second percentage}
 
-\item{pvalue_cutoff_go}{max p-value for a GO result to be considered statistically
-significant.}
+\item{n_top}{number of top genes}
 
-\item{read_able}{TRUE/FALSE whether gene names should be readable. The default is
-TRUE.}
+\item{use_resol}{use resolution for heatmaps}
 
-\item{tissue_ref_annotation}{Reference tissue for annotation. The default is
-"Brain" and all other scType reference tissues work.}
+\item{col_names}{column names for heatmaps}
 
-\item{min_pct_ann}{Minimum pct1 for differential gene expression analysis that will
-be used for the cell type annotation.}
+\item{col_pattern_hm}{pattern for heatmap columns}
 
-\item{logfc_threshold_ann}{Minimum log fold change threshold for differential
-gene expression analysis that will be used for the cell type annotation.}
+\item{label_hm}{label heatmaps}
 
-\item{assay_use_ann}{assay used for cell type annotation. The default is "RNA"}
+\item{draw_lines}{draw lines in heatmaps}
 
-\item{custom_ref_genes_ann}{TRUE/FALSE whether list of genes for the annotation
-is provided. Default is FALSE}
+\item{min_log2FC_go}{minimum log2 fold change for GO}
 
-\item{custom_gene_list}{If custom_ref_genes_ann == TRUEa reference gene list
-has to be provided. Default is that the opposite and value is set to NA}
+\item{reverse_go}{reverse for GO analysis}
 
-\item{customclassif}{name for classification used. Default is "ScType_annotation"}
+\item{translate_gene_id_from}{gene ID format to translate from}
 
-\item{plot_reduction}{reduction used for plotting annotation results.
-Default is "plot_reduction"}
+\item{translate_gene_id_to}{gene ID format to translate to}
 
-\item{plot_label_ann}{TRUE/FALSE whether labels should be plotted. Default is
-TRUE.}
+\item{org_use}{organism database}
 
-\item{plot_repel_ann}{TRUE/FALSE whether labels should be repelled Default is
-TRUE.}
+\item{ontology}{GO ontology}
 
-\item{plot_width_ann}{plot width of annotated dataset. Default = 8}
+\item{pvalue_cutoff_go}{p-value cutoff for GO}
 
-\item{plot_height_ann}{plot height of annotated dataset. Default = 6.}
+\item{qvalue_cutoff_go}{q-value cutoff for GO}
 
-\item{dge_present_ann}{TRUE/FALSE whether differential gene expression results
-are already present for example because the funcltion has been run previously.
-It is important that it has been run using the same settings up to the point of
-annotation. If so, setting the default FALSE value to TRUE can speed up the
-annotation process.}
+\item{read_able}{readable gene names}
 
-\item{dge_ann}{TRUE/FALSE whther differential gene expression should be run.
-Default is TRUE.}
+\item{tissue_ref_annotation}{tissue reference for annotation}
 
-\item{proportion}{threshold proportion for annotation. Default is set to 3 which
-means that the number differentially expressed genes in a cluster must be
-larger than a third of the total number of genes that define a cell type in scTypoe to
-be considered that cell type. Increasing the number makes annotation less stringent,
-decreasing it makes it more stringent.}
+\item{min_pct_ann}{minimum percentage for annotation}
 
-\item{cluster_qc_vars}{String of variables to test for cluster quality control.
-for example c("process_number", "caseNO", "Tissue").}
+\item{logfc_threshold_ann}{log fold change threshold for annotation}
 
-\item{sample_id}{unique identifier for each sample. For example "uniq_id" in the
-RNAseqER example dataset}
+\item{assay_use_ann}{assay to use for annotation}
 
-\item{cols_milo_design}{names of columns in metadata file which are used to
-construct the milo design matrix. Both technical and biological sources of
-variance may be included for example c("uniq_id","Tissue","gender","AgeGroup",
-"caseNO"). All variables of interest that will be tested for differential
-abundance have to be added.}
+\item{custom_ref_genes_ann}{use custom reference genes}
 
-\item{milo_test_fact}{Factors that will be used for both Milo differential
-abundance testing and for differential gene expression analysis with
-condition. For example c("Tissue", "gender", "AgeGroup"). Note that variables
-here have to be an element of cols_milo_design}
+\item{custom_gene_list}{custom gene list}
 
-\item{qvalue_cutoff_gomax}{max q-value for a GO result to be considered statistically
-significant.}
+\item{customclassif}{custom classification}
+
+\item{plot_reduction}{reduction for plotting}
+
+\item{plot_label_ann}{plot labels for annotation}
+
+\item{plot_repel_ann}{repel labels for annotation}
+
+\item{plot_width_ann}{plot width for annotation}
+
+\item{plot_height_ann}{plot height for annotation}
+
+\item{dge_present_ann}{DGE results present}
+
+\item{dge_ann}{perform DGE for annotation}
+
+\item{proportion}{proportion threshold}
+
+\item{cluster_qc_vars}{variables for cluster QC}
+
+\item{sample_id}{sample ID column}
+
+\item{cols_milo_design}{columns for Milo design}
+
+\item{milo_test_fact}{factors to test with Milo}
+
+\item{sketch}{whether to use sketched data for large datasets (Seurat 5 feature)}
+
+\item{sketch_ncells}{number of cells to use for sketching (default: 50000)}
+
+\item{sketch_method}{sketching method ("LeverageScore" or "Uniform")}
+
+\item{sketched_assay_name}{name of sketched assay (default: "sketch")}
+
+\item{shiny_name}{name for the Shiny app (default: "all_celltypes")}
+
+\item{read_file}{whether to read from file for Shiny app (default: TRUE)}
+
+\item{ext_pattern}{file extension pattern for Shiny app (default: ".RDS")}
+
+\item{default_1}{first default metadata column for Shiny app. If NULL, uses 4th column; if numeric, uses that column index (default: NULL)}
+
+\item{default_2}{second default metadata column for Shiny app. If NULL, uses 5th column; if numeric, uses that column index (default: NULL)}
+
+\item{assay_use_shiny}{assay to use in Shiny app (default: "RNA")}
+
+\item{gex_slot}{gene expression slots to include in Shiny app (default: c("data", "scale.data", "counts"))}
+
+\item{gene_mapping}{whether to use gene mapping in Shiny app (default: FALSE)}
+
+\item{default_gene1}{first default gene for Shiny app (default: "MALAT1")}
+
+\item{default_gene2}{second default gene for Shiny app (default: "GAPDH")}
+
+\item{default_multigene}{default multi-gene selection for Shiny app (default: NA)}
+
+\item{default_dimred}{default dimensional reduction for Shiny app (default: c("umap1", "umap2"))}
+
+\item{author}{author name for Shiny app (default: "My name")}
+
+\item{title}{publication title for Shiny app (default: "TBC")}
+
+\item{journal}{journal name for Shiny app (default: "TBC")}
+
+\item{volume}{journal volume for Shiny app (default: "TBC")}
+
+\item{page}{journal page for Shiny app (default: "TBC")}
+
+\item{year}{publication year for Shiny app (default: "2024")}
+
+\item{doi}{DOI for Shiny app (default: "TBC")}
+
+\item{link}{link for Shiny app (default: "TBC")}
+
+\item{shiny_title}{title for Shiny app (default: "My Shiny")}
+
+\item{volcano_mode}{modes for volcano plots ("overall", "clusterwise", or both) (default: c("overall", "clusterwise"))}
+
+\item{volcano_plotheight}{height of volcano plots (default: 6)}
+
+\item{volcano_plotwidth}{width of volcano plots (default: 8)}
+}
+\value{
+Processed Seurat object with all analyses completed
 }
 \description{
-This function takes a quality controlled dataset (gene and cell QC) with optional
-other corrections (ambient RNA removel, batch correction, integration) performed
-and produces results including documentation, seurat opbjects for further analysis
-and a shiny app.
+This function runs the complete RNAseqEr workflow from Seurat processing to 
+final analysis including clustering, annotation, differential expression, 
+and Shiny app generation.
+}
+\examples{
+\dontrun{
+# Run complete workflow
+result <- quick_RNAseqEr(cns,
+                         cluster_qc_vars = c("process_number", "caseNO", "Tissue"),
+                         sample_id = "uniq_id",
+                         cols_milo_design = c("uniq_id","Tissue","gender","AgeGroup","caseNO"),
+                         milo_test_fact = c("Tissue", "gender", "AgeGroup"))
+
+# For large datasets, use sketching
+result <- quick_RNAseqEr(large_dataset,
+                         sketch = TRUE,
+                         sketch_ncells = 100000,
+                         cluster_qc_vars = c("process_number", "caseNO", "Tissue"),
+                         sample_id = "uniq_id",
+                         cols_milo_design = c("uniq_id","Tissue","gender","AgeGroup","caseNO"),
+                         milo_test_fact = c("Tissue", "gender", "AgeGroup"))
+}
+
 }

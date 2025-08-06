@@ -19,6 +19,9 @@ remove_clu(
 \item{cluster_col}{metadata column that contains clustering information. Default is
 "RNAseqEr_annotation"}
 
+\item{RNAseqEr}{TRUE/FALSE whether RNAseqEr's cluster_qc() was used for quality control.
+Default is TRUE}
+
 \item{save_dir}{root directory used for analysis.}
 
 \item{dir_lab}{label of cell lineage. Default is "all_celltypes"}

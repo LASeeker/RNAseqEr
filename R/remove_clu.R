@@ -9,6 +9,8 @@
 #' @param seur_obj Seurat object
 #' @param cluster_col metadata column that contains clustering information. Default is
 #' "RNAseqEr_annotation"
+#' @param RNAseqEr TRUE/FALSE whether RNAseqEr's cluster_qc() was used for quality control.
+#' Default is TRUE
 #' @param save_dir root directory used for analysis.
 #' @param dir_lab label of cell lineage. Default is "all_celltypes"
 #' @param filter Filter indicating which clusters should be retained when

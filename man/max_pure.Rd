@@ -16,6 +16,8 @@ max_pure(
 )
 }
 \arguments{
+\item{dir_lab}{label used for which data is analysed. Default is "all_celltypes"}
+
 \item{save_dir}{path to main working directory. Use the same folder as for
 running cluster_purity.R and the function will find the appropriate files.
 .csv files. Default is "getwd()/outs/all_celltypes/tables/cluster_purity_data".}
@@ -38,7 +40,7 @@ A recommendation of a clustering resolution that maximizes cluster purity and
 cluster number and saves summary table to new folder within read_dir.
 }
 \description{
-This function uses cluster purity measurements at different resolution and looks
+This function uses cluster purity measurements at different resolutions and looks
 for a resolution suitable for a rough cell type annotation.
 }
 \examples{

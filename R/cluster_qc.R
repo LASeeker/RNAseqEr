@@ -121,7 +121,7 @@ cluster_qc <- function(seur_obj,
                           paste0(" * No individual ",
                                  vars[i],
                                  " contributed more than ",
-                                 propotion_thres[i],
+                                 threshold[i],
                                  " to this cluster. (QC pass)"))
 
 

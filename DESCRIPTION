@@ -26,7 +26,6 @@ Imports:
     ggplot2,
     bluster,
     ggbeeswarm,
-    clustree,
     openxlsx,
     HGNChelper,
     miloR,
@@ -40,10 +39,13 @@ Imports:
     DT,
     ggdendro,
     stringr
+    ShinyCell,
+    dotenv
 Suggests: 
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    CHOIR
 Config/testthat/edition: 3
 License: MIT + file LICENSE
 URL: https://github.com/LASeeker/RNAseqEr

@@ -14,7 +14,11 @@ int_res_all_mark(
   fil_pct_2 = 0.6,
   save_dir = getwd(),
   test_use = "MAST",
-  dir_lab = "all_celltypes"
+  assay_use = "RNA",
+  dir_lab = "all_celltypes",
+  min_cells_per_cluster = 3,
+  min_cells_for_comparison = 5,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -41,6 +45,9 @@ current working directory}
 
 \item{test_use}{statistical approach being used for differential gene expression
 analysis. Default is MAST.}
+
+\item{assay_use}{assay to use for differential gene expression analysis.
+Default is "RNA". For sketched data, use "sketch".}
 
 \item{dir_lab}{specifies which cell lineage is investigated which is important for
 output folder structure. The default is "all_celltypes".}
