@@ -3,7 +3,7 @@
 #'
 #' @param seur_obj Quality controlled and if necessary batch corrected and
 #' integrated Seurat object with several clustering resolutions
-#' @param reduction which dimensional reduction to use. Default is "PCA"
+#' @param pure_reduction which dimensional reduction to use. Default is "PCA"
 #' @param col_pattern Which column pattern to use to find clustering resolutions.
 #' Default is"RNA_snn_res"
 #' @param plot_cols colours for plot, default is colour_palette from the RNAseqEr
@@ -30,7 +30,7 @@
 #' cns <- seurat_proc(cns,tsne = FALSE)
 #' clu_pure(cns)
 clu_pure <- function(seur_obj,
-                     reduction = "PCA",
+                     pure_reduction = "PCA",
                      col_pattern = "RNA_snn_res",
                      plot_cols = colour_palette(),
                      clust_lab = TRUE,
@@ -66,7 +66,7 @@ clu_pure <- function(seur_obj,
     if(length(levels(clust)) > 1){
     clust_int <- as.integer(paste0(clust))
 
-    pure <- neighborPurity(reducedDim(sce_obj, reduction), clusters = clust_int)
+    pure <- neighborPurity(reducedDim(sce_obj, pure_reduction), clusters = clust_int)
     pure_data <- as.data.frame(pure)
     pure_data$maximum <- factor(pure_data$maximum)
     pure_data$cluster <- factor(clust_int)

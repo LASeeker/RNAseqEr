@@ -1,5 +1,37 @@
-
-
+#' Function to plot summary volcano plots
+#' @description
+#' This function takes a summarized differential gene expression result that for
+#' example has been created using the RNAseqEr function condense_marklists()
+#' and which includes labels for different celltypes or even cluster_labels within
+#' cell types and colours the plots based on this information. This is useful to see
+#' which celltype in a dataset varies most in gene expression with a factor of interest
+#' or which specific cluster of the cell lineage shows the strongest correlation.
+#'
+#' @param dge_res Differential gene expression result. An example is profided with
+#' the library (see example below).
+#' @param clu_col column name of dge_res that contains cluster labels.
+#' @param condition_label indicates wheter results are based on testing "conditions".
+#' At the moment this is for the creation of correct folder structures. It may be possible
+#' to use the same funciton to plot variaton in cluster markers. Then a label
+#' such as "cluster_markers" may be more appropriate
+#' @param mode Either "overall" (default) or "clusterwise" indicating whether
+#' cell lineages (such as astrocytes and microglia) should be compared or
+#' cluster labels such as microglia_1 and microglia_2
+#' @param save_dir root folder of the analysis. Default is getwd()
+#' @param conditions String of conditions that are to be tested
+#' @param plotheight height of output plot (default 6)
+#' @param plotwidth width of output plot (default 8)
+#' @param save_plots TRUE (default)/ FALSE whether plots should be saved to file.
+#' THe default is TRUE
+#'
+#' @return saves plots to file and to the environemnt and returns last volcano plot
+#' @import EnhancedVolcano
+#' @export
+#'
+#' @examples
+#' last_vol_plot <- volcano_seqEr(dge_res,
+#'                                conditions = c("AgeGroup", "gender", "Tissue"),
+#'                                save_plots = FALSE)
 volcano_seqEr <- function(dge_res,
                           clu_col = "cluster_id",
                           condition_label = "condition",
@@ -7,7 +39,8 @@ volcano_seqEr <- function(dge_res,
                           save_dir = getwd(),
                           conditions,
                           plotheight = 6,
-                          plotwidth = 8){
+                          plotwidth = 8,
+                          save_plots = TRUE){
 
 
     if(mode == "overall"){
@@ -67,6 +100,8 @@ volcano_seqEr <- function(dge_res,
                          curr_cond_data$X.1[o] <- curr_cond_data$X.1[o])
                 }
 
+                top5$X.1 <- top5$gene
+
 
                 p1 <-EnhancedVolcano(curr_cond_data,
                                      lab = curr_cond_data$gene,
@@ -80,7 +115,7 @@ volcano_seqEr <- function(dge_res,
                                      raster = F,
                                      #shapeCustom = keyvals.shape,
                                      colCustom = keyvals.col,
-                                     selectLab = top5$gene,
+                                     selectLab = top5$X.1,
                                      boxedLabels = T,
                                      drawConnectors = T,
                                      labFace = "bold",
@@ -106,6 +141,8 @@ volcano_seqEr <- function(dge_res,
                     height=plotheight, width = plotwidth)
                 print(p1)
                 dev.off()
+
+                print(p1)
 
                 proceed <-  FALSE
           }
@@ -185,6 +222,8 @@ volcano_seqEr <- function(dge_res,
                 print(p1)
                 dev.off()
 
+                print(p1)
+
 
               }
 
@@ -245,12 +284,16 @@ volcano_seqEr <- function(dge_res,
 
 
           #Plot
+
+
           top5 <- curr_cond_data %>% top_n(5, abs(avg_log2FC))
           for (o in 1:length(curr_cond_data$X.1)){
             ifelse(curr_cond_data$X.1[o] %in% top5$X.1 == TRUE,
                    curr_cond_data$X.1[o] <- curr_cond_data$gene[o],
                    curr_cond_data$X.1[o] <- curr_cond_data$X.1[o])
           }
+
+          top5$X.1 <- top5$gene
 
 
           p1 <-EnhancedVolcano(curr_cond_data,
@@ -265,7 +308,7 @@ volcano_seqEr <- function(dge_res,
                                raster = F,
                                #shapeCustom = keyvals.shape,
                                colCustom = keyvals.col,
-                               #selectLab = top5$gene,
+                               selectLab = top5$X.1,
                                boxedLabels = T,
                                drawConnectors = T,
                                labFace = "bold",
@@ -292,6 +335,7 @@ volcano_seqEr <- function(dge_res,
               height=plotheight, width = plotwidth)
           print(p1)
           dev.off()
+          print(p1)
 
           proceed <-  FALSE
         }
@@ -336,6 +380,8 @@ volcano_seqEr <- function(dge_res,
                      subs_data$X.1[o] <- subs_data$X.1[o])
             }
 
+            top5$X.1 <- top5$gene
+
 
             p1 <- EnhancedVolcano(subs_data,
                                   lab = subs_data$gene,
@@ -347,7 +393,7 @@ volcano_seqEr <- function(dge_res,
                                   raster = F,
                                   #shapeCustom = keyvals.shape,
                                   colCustom = keyvals.col,
-                                  selectLab = top5$gene,
+                                  selectLab = top5$X.1,
                                   boxedLabels = T,
                                   drawConnectors = T,
                                   labFace = "bold",
@@ -372,11 +418,13 @@ volcano_seqEr <- function(dge_res,
                 height=plotheight, width = plotwidth)
             print(p1)
             dev.off()
+            print(p1)
           }
         }
       }
     }
   }
+  return(p1)
 }
 
 

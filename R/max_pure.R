@@ -1,8 +1,7 @@
 #' max_pure
 #' @description
-#' This function uses cluster purity measurements at different resoution and looks
-#' for a resolution suitable for a rough celltype annotattion.
-#'
+#' This function uses cluster purity measurements at different resolution and looks
+#' for a resolution suitable for a rough cell type annotation.
 #' @param save_dir path to main working directory. Use the same folder as for
 #' running cluster_purity.R and the function will find the appropriate files.
 #' .csv files. Default is "getwd()/outs/all_celltypes/tables/cluster_purity_data".
@@ -12,7 +11,8 @@
 #' @param pure_thres Threshold of cluster purity to be used. The function is looking
 #' for the maximum number of clusters over this purity threshold.
 #' @param second_thres threshold of the calculated pure measure. Default is 1.
-#'
+#' @param width plot width for saving average purity measures (default 8)
+#' @param height plot height for saving average purity measures (default 6)
 #' @return
 #' A recommendation of a clustering resolution that maximizes cluster purity and
 #' cluster number and saves summary table to new folder within read_dir.
@@ -31,12 +31,20 @@
 max_pure <- function(dir_lab = "all_celltypes",
                      save_dir = getwd(),
                      weight_factor = 22,
-                     pure_thres = 0.96,
-                     second_thres = 1){
+                     weight_clusters = 0.5,
+                     pure_thres = 0.95,
+                     second_thres = 1,
+                     width = 8,
+                     height = 6
+                       ){
   save_path <- paste0(save_dir,
                       "/outs/",
                       dir_lab,
                       "/tables/cluster_purity_data")
+  save_plot_path <- paste0(save_dir,
+                           "/outs/",
+                           dir_lab,
+                           "/plots/cluster_purity_plots")
   files <- list.files(save_path, pattern = "purity.csv")
   myfiles <- lapply(paste(save_path, files, sep = "/"), read.csv)
 
@@ -50,11 +58,10 @@ max_pure <- function(dir_lab = "all_celltypes",
                           clu_count = clu_count,
                           pure_measure =  pure_measure)
 
-
     if(j == 1){
       keep_df <- df_temp
       keep_res <- files[j]
-      keep_num_clu<- clu_count
+      keep_num_clu <- clu_count
     }else{
       keep_df <- rbind(keep_df, df_temp)
       if(clu_pur_mean >  pure_thres &
@@ -80,6 +87,23 @@ max_pure <- function(dir_lab = "all_celltypes",
   if(dir.exists(save_summary) == FALSE){
     dir.create(save_summary)
   }
+
+  keep_df$resolution <- sapply(strsplit(keep_df[[1]], "_cluster"), "[", 1)
+  keep_df$clu_count <- as.numeric(keep_df$clu_count)
+  sum_plot <- ggplot(keep_df, aes(x=clu_count, y = mean_pur,
+                                  col = resolution)) +
+    geom_point(size = 4)  +
+    #stat_smooth(method = "lm", col = "blue",formula = y~poly(x,2),se=F) +
+    stat_smooth(method = "loess", col = "blue") +
+    theme_minimal() +
+    scale_colour_viridis_d()
+
+  pdf(paste0(save_plot_path,
+             "/",
+            "Average_pure_plot.pdf"), width=width, height=height)
+  plot(sum_plot)
+
+  dev.off()
 
   write.csv(keep_df, paste0(save_summary, "/summary_purity_stats.csv"))
   return(keep_resolution)

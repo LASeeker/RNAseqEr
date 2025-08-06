@@ -8,6 +8,7 @@
 #' @importFrom stats as.formula
 #' @importFrom stats dist
 #' @importFrom stats quantile
+#' @importFrom stringr str_squish
 #' @importFrom utils combn
 #' @importFrom utils head
 #' @importFrom utils read.csv

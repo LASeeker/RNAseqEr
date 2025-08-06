@@ -1,7 +1,12 @@
 #' Generate heatmaps
 #' @description
 #' Caculate average gene expression of a provided list of genes across different
-#' clusters and plot in heatmaps that are saved to file.
+#' clusters and plot in heatmaps that are saved to file at different redolutions.
+#' At each resolution, the average gene expression if int_genes is compared and
+#' three measures of similarity are calculated: The maximum difference, the
+#' mean difference and the Eucledian distance using all average expression values.
+#' Those measures are being used to chose a clustering resolution that is proposed
+#' to be used downstream.
 #'
 #' @param seur_obj Quality controlled and if necessary batch corrected and
 #' integrated Seurat object with several clustering resolutions
@@ -12,6 +17,8 @@
 #' has to be provided.
 #' @param col_pattern Which column pattern to use to find clustering resolutions.
 #' Default is"RNA_snn_res"
+#' @param dir_lab label which cell lineage is analysed to create the correct
+#' folder structure.
 #' @param int_genes list of interesting genes that should be tested.
 #' @param gene_count if list of interesting genes is long it will be shortened
 #' to gene_count. Default is 250.
@@ -31,7 +38,7 @@
 #' two clusters.Default is 10 (differences must be larger than threshold).
 #' @param mean_diff_thres resolution threshold for determining if clusters are
 #' different enough based on the mean difference of average gene expression between
-#' two clusters.Default is 0.01 (differences must be larger than threshold).
+#' two clusters. Default is 0.01 (differences must be larger than threshold).
 #' @param eucl_dist_thres Threshold of Eucledian distance difference between
 #' the average expression across all int_genes when comparing two clusters to determine
 #' if they are different enough or too similar and should be merged. Default is
@@ -41,7 +48,8 @@
 #' comparison of each two cluster pair that passes the above set thresholds. Defautl
 #' is FALSE. Setting it to TRUE may enable finding meaningful thresholds.
 #'
-#' @return saves plots to file
+#' @return saves plots and data frame containing cluster similarity measures to
+#' file and returns the data frame.
 #' @export
 #'
 #' @examples
@@ -53,6 +61,7 @@ heatmap_seqEr <- function(seur_obj,
                           use_resol = TRUE,
                           col_names,
                           col_pattern = "RNA_snn_res",
+                          dir_lab = "all_celltypes",
                           int_genes,
                           gene_count = 200,
                           save_dir = getwd(),
@@ -74,6 +83,17 @@ heatmap_seqEr <- function(seur_obj,
     names_col <- mixedsort(names_col)
   }else{
     names_col <- col_names
+  }
+
+  hm_save_dir <- paste0(save_dir, "/outs/", dir_lab, "/plots/heatmaps")
+  hmdf_save_dir <- paste0(save_dir, "/outs/", dir_lab, "/tables/heatmaps")
+
+  if(dir.exists(hm_save_dir) == FALSE){
+    dir.create(hm_save_dir, recursive = TRUE)
+  }
+
+  if(dir.exists(hmdf_save_dir) == FALSE){
+    dir.create(hmdf_save_dir, recursive = TRUE)
   }
 
 
@@ -109,8 +129,7 @@ heatmap_seqEr <- function(seur_obj,
 
     hm_av <- hm_av + theme_minimal(y_size)
 
-    png(paste0(save_dir,
-               "/",
+    png(paste0(hm_save_dir,
                names_col[i],
                "_average_marker_heatmap.png"),
         width=width, height=height, res = 300)
@@ -190,6 +209,11 @@ heatmap_seqEr <- function(seur_obj,
       keep_df <- rbind(keep_df, df)
     }
   }
-  print("Generated heatmap and saved them to file.")
+
+
+
+  write.csv(keep_df,
+            paste0(hmdf_save_dir, "/heatmap_similarity.csv"))
+  print("Generated heatmap and saved them to file. Returning dataframe with cluster similarity measures. ")
   return(keep_df)
 }

@@ -37,7 +37,10 @@
 #'
 #'
 condense_marklists <- function(save_dir = getwd(),
-                               exclude_out_dir = "data",
+                               exclude_out_dir = c("data",
+                                                   "summary_figures",
+                                                   "protocol",
+                                                   "supplementary_tables"),
                                comp_mode = "overall", #alternative is "clusterwise"
                                conditions,
                                cluster_label = "cell_lineage"){

@@ -8,8 +8,11 @@ max_pure(
   dir_lab = "all_celltypes",
   save_dir = getwd(),
   weight_factor = 22,
-  pure_thres = 0.96,
-  second_thres = 1
+  weight_clusters = 0.5,
+  pure_thres = 0.95,
+  second_thres = 1,
+  width = 8,
+  height = 6
 )
 }
 \arguments{
@@ -25,14 +28,18 @@ measure.}
 for the maximum number of clusters over this purity threshold.}
 
 \item{second_thres}{threshold of the calculated pure measure. Default is 1.}
+
+\item{width}{plot width for saving average purity measures (default 8)}
+
+\item{height}{plot height for saving average purity measures (default 6)}
 }
 \value{
 A recommendation of a clustering resolution that maximizes cluster purity and
 cluster number and saves summary table to new folder within read_dir.
 }
 \description{
-This function uses cluster purity measurements at different resoution and looks
-for a resolution suitable for a rough celltype annotattion.
+This function uses cluster purity measurements at different resolution and looks
+for a resolution suitable for a rough cell type annotation.
 }
 \examples{
 library(here)

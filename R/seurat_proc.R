@@ -5,6 +5,8 @@
 #'
 #' @param seur_obj A Seurat object that has been quality controlled and if
 #' necessary batch corrected and integrated
+#' @param nfeatures number of features (= genes) to select as top variable ones.
+#' The default is 2000.
 #' @param n_pcs number of dimensions (1:n_pcs) used for findNeighbors() and and
 #' non linear dimensional reduction (UMAP, TSNE).
 #'
@@ -32,6 +34,7 @@
 #' cns <- seurat_proc(cns)
 #'
 seurat_proc <- function(seur_obj,
+                        nfeatures = 2000,
                         n_pcs = 20,
                         res = c(
                           0.005, 0.01, 0.04, 0.05,
@@ -45,7 +48,7 @@ seurat_proc <- function(seur_obj,
                         plotheight = 5,
                         plotwidth = 5) {
   seur_obj <- Seurat::NormalizeData(seur_obj)
-  seur_obj <- Seurat::FindVariableFeatures(seur_obj)
+  seur_obj <- Seurat::FindVariableFeatures(seur_obj, nfeatures = nfeatures)
   scale_genes <- select_genes
   seur_obj <- Seurat::ScaleData(seur_obj, features = scale_genes)
   seur_obj <- Seurat::RunPCA(seur_obj, features = VariableFeatures(object = seur_obj))

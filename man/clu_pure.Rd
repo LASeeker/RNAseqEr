@@ -7,7 +7,7 @@ and file}
 \usage{
 clu_pure(
   seur_obj,
-  reduction = "PCA",
+  pure_reduction = "PCA",
   col_pattern = "RNA_snn_res",
   plot_cols = colour_palette(),
   clust_lab = TRUE,
@@ -22,7 +22,7 @@ clu_pure(
 \item{seur_obj}{Quality controlled and if necessary batch corrected and
 integrated Seurat object with several clustering resolutions}
 
-\item{reduction}{which dimensional reduction to use. Default is "PCA"}
+\item{pure_reduction}{which dimensional reduction to use. Default is "PCA"}
 
 \item{col_pattern}{Which column pattern to use to find clustering resolutions.
 Default is"RNA_snn_res"}
