@@ -6,6 +6,7 @@
 \usage{
 seurat_proc(
   seur_obj,
+  nfeatures = 2000,
   n_pcs = 20,
   res = c(0.005, 0.01, 0.04, 0.05, seq(from = 0.1, to = 1, by = 0.1)),
   select_genes = rownames(seur_obj),
@@ -24,6 +25,9 @@ seurat_proc(
 \arguments{
 \item{seur_obj}{A Seurat object that has been quality controlled and if
 necessary batch corrected and integrated}
+
+\item{nfeatures}{number of features (= genes) to select as top variable ones.
+The default is 2000.}
 
 \item{n_pcs}{number of dimensions (1:n_pcs) used for findNeighbors() and and
 non linear dimensional reduction (UMAP, TSNE).}

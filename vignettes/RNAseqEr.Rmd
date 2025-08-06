@@ -198,6 +198,7 @@ present a function that automatically runs Seurat's standard normalisation,
 selection of variable genes, dimensional reduction and clustering at different 
 resolutions. 
 
+
 ```{r seurat_processing, cache=TRUE, echo=FALSE, results='hide', fig.keep='all', fig.width= 8, fig.height=5}
 cns <- seurat_proc(cns)
 
@@ -323,7 +324,8 @@ cases is is beneficial to subset the dataset into cell lineage datasets that the
 can be used for finer clustering and downstream analyses. 
 The following function subsets the dataset for all clusters that
 have been identifies and annotated above using the RNAseqEr annotation. Any 
-metadata column can be used for subsetting. Each cell lineage will be saved in 
+metadata column can be used for subsetting by providing it as argument 
+"subset_column" . subset_RNAseqEr will save each cell lineage data in 
 a separate .RDS file.
 
 
@@ -343,7 +345,7 @@ the data scientist is yet inexperienced. From a biological point of view
 we seek to find a resolution with the maximum number of clusters that still allows
 the identification of cluster markers that can be used for validation using other 
 lab techniques such as immuno-fluorescence or RNAscope. 
-We show here our approach using the example of ologodendrocytes. 
+We show here our approach using the example of oligodendrocytes. 
 We also provide a function using the same approach for all the subsetted datasets
 automatically. 
 
@@ -367,12 +369,12 @@ resolution (for example 0.6 and 0.7) or simply seem to overcluster, where cluste
 separations are visually not detectable and cluster labels overlap completely (>1).
 
 All other cluster resolutions may make sense, so how to pick a suitable one? Our
-approach is to decide in by looking at the results of differential gene expression 
+approach is to decide by looking at the results of differential gene expression 
 analyses to see whether or not we can identify markers for most clusters. Why
 most and not all? We noticed that in many datasets, one cluster seems to be the 
 "average" that does express all the cell lineage markers but nothing special over 
 and above. It may be reasonable to keep a clustering resolution where a cluster
-is negative for markers that characterise other clusters.
+is negative for markers that characterize other clusters.
 
 So all potentially interesting resolutions can be used below:
 

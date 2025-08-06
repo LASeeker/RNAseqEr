@@ -6,7 +6,7 @@
 \usage{
 condense_marklists(
   save_dir = getwd(),
-  exclude_out_dir = "data",
+  exclude_out_dir = c("data", "summary_figures", "protocol", "supplementary_tables"),
   comp_mode = "overall",
   conditions,
   cluster_label = "cell_lineage"

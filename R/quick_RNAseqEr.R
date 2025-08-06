@@ -127,6 +127,7 @@ quick_RNAseqEr <- function(seur_obj,
 
                            #For Seurat processing
                            n_pcs = 20,
+                           nfeatures = 2000,
                            res = c(0.005, 0.01, 0.04, 0.05,
                                    seq(from = 0.1, to = 1.5, by = 0.1)),
                            select_genes = rownames(seur_obj),
@@ -144,6 +145,11 @@ quick_RNAseqEr <- function(seur_obj,
                            use_reduction = "umap",
                            dir_lab = "all_celltypes",
 
+                           #for selecting most appropriate cluster purity
+                           weight_factor = 22,
+                           pure_thres = 0.96,
+                           second_thres = 1,
+
                            # perform differential gene expression at different
                            #clustering resolutions
                            int_cols = paste0(col_pattern, res),
@@ -153,32 +159,13 @@ quick_RNAseqEr <- function(seur_obj,
                            fil_pct_1 = 0.25,
                            fil_pct_2 = 0.6,
                            test_use = "MAST",
-
-                           # pairwise comparison of clusters at one or more
-                           # resolutions of interest
-                           int_cols_pw = "RNA_snn_res.1",
-                           min_pct_pw = 0.25,
-                           logfc_threshold_pw = 0.25,
-                           fil_pct_1_pw = 0.25,
-                           fil_pct_2_pw = 0.1,
                            assay_use = "RNA",
 
-                           # compile list of interesting genes based on top x
-                           # hits per cluster/group of interest using DGE
-                           # results (pairwise and not)
-
-                           ad_pval = 0.05,
-                           avg_log = 1.2,
-                           pct_1 = 0.25,
-                           pct_2 = 0.6,
-                           n_top = 10,
 
                            #for creating heatmaps
-                           use_resol = TRUE,
-                           col_names = NA,
-                           col_pattern_hm = "RNA_snn_res",
-                           label_hm = TRUE,
-                           draw_lines = FALSE,
+                           use_resol = FALSE,
+                           max_diff_threshold = 10,
+                           mean_diff_thres = 0.1,
 
                            #for running gene ontology analysis
                            #gene_list,
@@ -204,15 +191,16 @@ quick_RNAseqEr <- function(seur_obj,
                            plot_label_ann = TRUE,
                            plot_repel_ann = TRUE,
                            plot_width_ann = 8,
-                           plot_height_ann = 8,
+                           plot_height_ann = 6,
                            dge_present_ann = FALSE,
                            dge_ann = TRUE,
                            proportion = 3,
 
                            #cluster qc
-                           cluster_qc_vars, # use c("process_number", "caseNO", "Tissue"),
+                           cluster_qc_vars,
 
                            # Milo
+
                            sample_id,  # use"uniq_id"
                            cols_milo_design, # use c("uniq_id","Tissue","gender","AgeGroup","caseNO")
                            milo_test_fact,  # use c("Tissue", "gender", "AgeGroup")
@@ -834,10 +822,6 @@ quick_RNAseqEr <- function(seur_obj,
     }
   
   
-  
-  
-  
-  
     #save annotated dataset
     saveRDS(seur_obj, paste0(proc_dat_dir_all, "/", dir_lab, ".RDS"))
   
@@ -853,33 +837,6 @@ quick_RNAseqEr <- function(seur_obj,
       } else {
         default_1 <- meta_cols[1]  # fallback to first column
       }
-    } else if(is.numeric(default_1)) {
-      # Use the specified column index
-      meta_cols <- colnames(seur_obj@meta.data)
-      if(default_1 <= length(meta_cols)) {
-        default_1 <- meta_cols[default_1]
-      } else {
-        default_1 <- meta_cols[1]  # fallback to first column
-      }
-    }
-    
-    if(is.null(default_2)) {
-      # Use 5th metadata column if available
-      meta_cols <- colnames(seur_obj@meta.data)
-      if(length(meta_cols) >= 5) {
-        default_2 <- meta_cols[5]
-      } else {
-        default_2 <- meta_cols[1]  # fallback to first column
-      }
-    } else if(is.numeric(default_2)) {
-      # Use the specified column index
-      meta_cols <- colnames(seur_obj@meta.data)
-      if(default_2 <= length(meta_cols)) {
-        default_2 <- meta_cols[default_2]
-      } else {
-        default_2 <- meta_cols[1]  # fallback to first column
-      }
-    }
 
     create_shiny(seur_obj,
                  shiny_name = shiny_name,
@@ -990,5 +947,3 @@ quick_RNAseqEr <- function(seur_obj,
   
     return(seur_obj)
   }
-}
-}

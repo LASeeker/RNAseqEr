@@ -9,6 +9,7 @@ heatmap_seqEr(
   use_resol = TRUE,
   col_names,
   col_pattern = "RNA_snn_res",
+  dir_lab = "all_celltypes",
   int_genes,
   gene_count = 200,
   save_dir = getwd(),
@@ -38,6 +39,9 @@ has to be provided.}
 
 \item{col_pattern}{Which column pattern to use to find clustering resolutions.
 Default is"RNA_snn_res"}
+
+\item{dir_lab}{label which cell lineage is analysed to create the correct
+folder structure.}
 
 \item{int_genes}{list of interesting genes that should be tested.}
 
@@ -69,7 +73,7 @@ two clusters.Default is 10 (differences must be larger than threshold).}
 
 \item{mean_diff_thres}{resolution threshold for determining if clusters are
 different enough based on the mean difference of average gene expression between
-two clusters.Default is 0.01 (differences must be larger than threshold).}
+two clusters. Default is 0.01 (differences must be larger than threshold).}
 
 \item{eucl_dist_thres}{Threshold of Eucledian distance difference between
 the average expression across all int_genes when comparing two clusters to determine
@@ -82,11 +86,17 @@ comparison of each two cluster pair that passes the above set thresholds. Defaut
 is FALSE. Setting it to TRUE may enable finding meaningful thresholds.}
 }
 \value{
-saves plots to file
+saves plots and data frame containing cluster similarity measures to
+file and returns the data frame.
 }
 \description{
 Caculate average gene expression of a provided list of genes across different
-clusters and plot in heatmaps that are saved to file.
+clusters and plot in heatmaps that are saved to file at different redolutions.
+At each resolution, the average gene expression if int_genes is compared and
+three measures of similarity are calculated: The maximum difference, the
+mean difference and the Eucledian distance using all average expression values.
+Those measures are being used to chose a clustering resolution that is proposed
+to be used downstream.
 }
 \examples{
 library(Seurat)

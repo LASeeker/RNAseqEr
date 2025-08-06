@@ -108,6 +108,8 @@ volcano_seqEr <- function(dge_res,
                          curr_cond_data$X.1[o] <- curr_cond_data$X.1[o])
                 }
 
+                top5$X.1 <- top5$gene
+
 
                 p1 <-EnhancedVolcano(curr_cond_data,
                                      lab = curr_cond_data$gene,
@@ -121,7 +123,7 @@ volcano_seqEr <- function(dge_res,
                                      raster = F,
                                      #shapeCustom = keyvals.shape,
                                      colCustom = keyvals.col,
-                                     selectLab = top5$gene,
+                                     selectLab = top5$X.1,
                                      boxedLabels = T,
                                      drawConnectors = T,
                                      labFace = "bold",
@@ -147,6 +149,8 @@ volcano_seqEr <- function(dge_res,
                     height=plotheight, width = plotwidth)
                 print(p1)
                 dev.off()
+
+                print(p1)
 
                 proceed <-  FALSE
           }
@@ -226,6 +230,8 @@ volcano_seqEr <- function(dge_res,
                 print(p1)
                 dev.off()
 
+                print(p1)
+
 
               }
 
@@ -286,12 +292,16 @@ volcano_seqEr <- function(dge_res,
 
 
           #Plot
+
+
           top5 <- curr_cond_data %>% top_n(5, abs(avg_log2FC))
           for (o in 1:length(curr_cond_data$X.1)){
             ifelse(curr_cond_data$X.1[o] %in% top5$X.1 == TRUE,
                    curr_cond_data$X.1[o] <- curr_cond_data$gene[o],
                    curr_cond_data$X.1[o] <- curr_cond_data$X.1[o])
           }
+
+          top5$X.1 <- top5$gene
 
 
           p1 <-EnhancedVolcano(curr_cond_data,
@@ -306,7 +316,7 @@ volcano_seqEr <- function(dge_res,
                                raster = F,
                                #shapeCustom = keyvals.shape,
                                colCustom = keyvals.col,
-                               #selectLab = top5$gene,
+                               selectLab = top5$X.1,
                                boxedLabels = T,
                                drawConnectors = T,
                                labFace = "bold",
@@ -333,6 +343,7 @@ volcano_seqEr <- function(dge_res,
               height=plotheight, width = plotwidth)
           print(p1)
           dev.off()
+          print(p1)
 
           proceed <-  FALSE
         }
@@ -377,6 +388,8 @@ volcano_seqEr <- function(dge_res,
                      subs_data$X.1[o] <- subs_data$X.1[o])
             }
 
+            top5$X.1 <- top5$gene
+
 
             p1 <- EnhancedVolcano(subs_data,
                                   lab = subs_data$gene,
@@ -388,7 +401,7 @@ volcano_seqEr <- function(dge_res,
                                   raster = F,
                                   #shapeCustom = keyvals.shape,
                                   colCustom = keyvals.col,
-                                  selectLab = top5$gene,
+                                  selectLab = top5$X.1,
                                   boxedLabels = T,
                                   drawConnectors = T,
                                   labFace = "bold",
@@ -413,11 +426,13 @@ volcano_seqEr <- function(dge_res,
                 height=plotheight, width = plotwidth)
             print(p1)
             dev.off()
+            print(p1)
           }
         }
       }
     }
   }
+  return(p1)
 }
 
 

@@ -36,6 +36,9 @@ Imports:
     stats,
     utils,
     shinyhelper,
+    DT,
+    ggdendro,
+    stringr
     ShinyCell,
     dotenv
 Suggests: 

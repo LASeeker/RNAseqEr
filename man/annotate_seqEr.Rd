@@ -14,9 +14,9 @@ annotate_seqEr(
   assay_use = "RNA",
   save_dir = getwd(),
   dir_lab = "all_celltypes",
-  custom_ref_genes = TRUE,
-  custom_gene_list =
-    "https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/ScTypeDB_short.xlsx",
+  custom_ref_genes = FALSE,
+  custom_gene_list,
+  low_confident_thres = 4,
   customclassif = "ScType_annotation",
   plot_reduction = "umap",
   plot_label = TRUE,
@@ -49,7 +49,7 @@ expressing the gene. Default is 0.25.}
 \item{logfc_threshold}{Minimal log2 fold change for differential gene expression.
 Default is 0.8.}
 
-\item{assay_use}{Which assay should be used for differential gene expression analusis.
+\item{assay_use}{Which assay should be used for differential gene expression analysis.
 Default is "RNA".}
 
 \item{save_dir}{Directory to be used for saving output.}
@@ -60,6 +60,11 @@ Default is "RNA".}
 being provided by the user.}
 
 \item{custom_gene_list}{if custom_ref_genes == TRUE provide custom gene list here.}
+
+\item{low_confident_thres}{Relates celltype score to number of cells in that
+category, the higher the value the more lenient. The default scTYpe threshold is 4.
+If score is lower than the number of cells in that category divided by the
+low_confident_thres, the cluster is annotated as "Unknown"}
 
 \item{customclassif}{which name should be used for the meta data column saving the
 scType annotation information. Default is ScType_annotation"}
@@ -83,8 +88,8 @@ based on scType alone.}
 
 \item{proportion}{threshold proportion for annotation. Default is set to 3 which
 means that the number differentially expressed genes in a cluster must be
-larger than a third of the total number of genes that define a cell type in scTyoe to
-be cosidered that cell type. Increasing the number makes annotation less stringent,
+larger than a third of the total number of genes that define a cell type in scTypoe to
+be considered that cell type. Increasing the number makes annotation less stringent,
 decreasing it makes it more stringent.}
 
 \item{unknown_threshold}{threshold for what proportion of cells in a cluster

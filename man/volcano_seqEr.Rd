@@ -13,6 +13,51 @@ volcano_seqEr(
   conditions,
   plotheight = 6,
   plotwidth = 8,
+  save_plots = TRUE
+)
+}
+\arguments{
+\item{dge_res}{Differential gene expression result. An example is profided with
+the library (see example below).}
+
+\item{clu_col}{column name of dge_res that contains cluster labels.}
+
+\item{condition_label}{indicates wheter results are based on testing "conditions".
+At the moment this is for the creation of correct folder structures. It may be possible
+to use the same funciton to plot variaton in cluster markers. Then a label
+such as "cluster_markers" may be more appropriate}
+
+\item{mode}{Either "overall" (default) or "clusterwise" indicating whether
+cell lineages (such as astrocytes and microglia) should be compared or
+cluster labels such as microglia_1 and microglia_2}
+
+\item{save_dir}{root folder of the analysis. Default is getwd()}
+
+\item{conditions}{String of conditions that are to be tested}
+
+\item{plotheight}{height of output plot (default 6)}
+
+\item{plotwidth}{width of output plot (default 8)}
+
+\item{save_plots}{TRUE (default)/ FALSE whether plots should be saved to file.
+THe default is TRUE}
+}
+\value{
+saves plots to file and to the environemnt and returns last volcano plot
+}
+\description{
+This function takes a summarized differential gene expression result that for
+example has been created using the RNAseqEr function condense_marklists()
+and which includes labels for different celltypes or even cluster_labels within
+cell types and colours the plots based on this information. This is useful to see
+which celltype in a dataset varies most in gene expression with a factor of interest
+or which specific cluster of the cell lineage shows the strongest correlation.
+}
+\examples{
+last_vol_plot <- volcano_seqEr(dge_res,
+                               conditions = c("AgeGroup", "gender", "Tissue"),
+                               save_plots = FALSE)
+=======
   additional_p_adjust = FALSE,
   p_adjust_method = "BH"
 )
@@ -55,5 +100,4 @@ volcano_seqEr(dge_res = condition_markers,
               additional_p_adjust = TRUE,
               p_adjust_method = "BH")
 }
-
 }
