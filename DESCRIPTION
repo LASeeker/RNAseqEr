@@ -38,7 +38,7 @@ Imports:
     shinyhelper,
     DT,
     ggdendro,
-    stringr
+    stringr,
     ShinyCell,
     dotenv
 Suggests: 
