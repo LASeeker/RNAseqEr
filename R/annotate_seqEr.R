@@ -1,17 +1,17 @@
 #' Automatic annotation of broad celltypes using ScType
 #' @description
 #' ScType (https://www.nature.com/articles/s41467-022-28803-w) is used to identify
-#' cell types automatically. If a onsiderable number of cells remain unknown,
+#' cell types automatically. If a considerable number of cells remain unknown,
 #' an additional step which is based on differentially expressed genes is used
 #' to attempt an celltype identification.
 #'
 #' @param seur_obj Seurat object
-#' @param tissue_ref Specify which tissue is being used by chosing from the following:
+#' @param ident_use meta data column that contains clustering resolution of interest
+#' for broad celltype annotation
+#' @param tissue_ref Specify which tissue is being used by choosing from the following:
 #' "Brain", "Immune system", "Pancreas", "Liver", "Eye", "Kidney", "Brain", "Lung",
 #' "Adrenal", "Heart", "Intestine", "Muscle", "Placenta", "Spleen", "Stomach",
 #' "Thymus"
-#' @param ident_use meta data column that contains clustering resolution of interest
-#' for broad celltype annotation 
 #' @param test_use statistical test used for differential gene expression analysis.
 #' Default is "MAST".
 #' @param min_pct minimum percentage of cells within the cluster of interest
@@ -26,7 +26,7 @@
 #' being provided by the user.
 #' @param custom_gene_list if custom_ref_genes == TRUE provide custom gene list here.
 #' @param low_confident_thres Relates celltype score to number of cells in that
-#' category, the higher the value the more lenient. The default scTYpe threshold is 4.
+#' category, the higher the value the more lenient. The default scType threshold is 4.
 #' If score is lower than the number of cells in that category divided by the
 #' low_confident_thres, the cluster is annotated as "Unknown"
 #' @param customclassif which name should be used for the meta data column saving the
@@ -41,15 +41,15 @@
 #' @param plot_height height of DimPlot in output file. Default = 8.
 #' @param unknown_threshold threshold for what proportion of cells in a cluster
 #' should be "Unknown" before triggering additional annotation steps. Default is 0.25.
-#' @param dge TURE/FALSE whether differential gene expression should be performed.
+#' @param dge TRUE/FALSE whether differential gene expression should be performed.
 #' Default is TRUE, to allow for annotation of celltypes that were not annotated
 #' based on scType alone.
 #' @param proportion threshold proportion for annotation. Default is set to 3 which
 #' means that the number differentially expressed genes in a cluster must be
-#' larger than a third of the total number of genes that define a cell type in scTypoe to
+#' larger than a third of the total number of genes that define a cell type in scType to
 #' be considered that cell type. Increasing the number makes annotation less stringent,
 #' decreasing it makes it more stringent.
-#' @param colours Colours for DimPlots. Default is colour_pelette() from The RNAseqEr
+#' @param colours Colours for DimPlots. Default is colour_palette() from The RNAseqEr
 #' library
 #'
 #' @return Seurat object with added ScType and RNAseqEr annotation
@@ -88,267 +88,9 @@ annotate_seqEr <- function(seur_obj,
                            plot_height = 8,
                            dge = TRUE,
                            proportion = 3,
-                           unknown_threshold = 0.25, # New parameter for controlling what's considered "Unknown"
+                           unknown_threshold = 0.25,
                            colours = colour_palette()) {
   
-  #test whether plot_reduction is in seurat obj
-  plot_reduction <- check_dimred_name(seur_obj = seur_obj,
-                                      plot_reduction = plot_reduction)
-
-  seur_obj <-  sc_type_annot(seur_obj,
-                            custom_ref_genes = custom_ref_genes,
-                            tissue_ref = tissue_ref,
-                            assay_use = assay_use,
-                            ident_use = ident_use,
-                            low_confident_thres = low_confident_thres,
-                            customclassif = customclassif,
-                            save_plot = TRUE,
-                            save_dir = save_dir,
-                            dir_lab = dir_lab,
-                            plot_width = plot_width,
-                            plot_height = plot_height)
-
-
-
-
-    # prepare output folder for dge
-    marker_dir <- paste0(
-      save_dir,
-      "/outs/",
-      dir_lab,
-      "/tables/DGE/broad_celltype_markers"
-    )
-
-    new_dir(marker_dir)
-
-
-    if(dge_present == TRUE){
-        markers <- read.csv(paste0(marker_dir,
-                                   "/ScType_cluster_markers_",
-                                   ident_use,
-                                   ".csv"))
-        #remove previous annotation if present
-        bool <- grepl("new_annot",
-                      names(markers), fixed = FALSE)
-        markers <- markers[,!bool]
-        bool <- grepl("RNAseqEr_ann",
-                      names(markers), fixed = FALSE)
-        markers <- markers[,!bool]
-        bool <- grepl("X.",
-                      names(markers), fixed = FALSE)
-        markers <- markers[,!bool]
-      }
-
-
-    Idents(seur_obj) <- customclassif
-    seur_obj$scType_prelim_ann <- ifelse(seur_obj@meta.data[[customclassif]] == "Unknown",
-                                       paste(seur_obj@meta.data[[ident_use]],
-                                             seur_obj@meta.data[[customclassif]],
-                                             sep = "_"
-                                       ),
-                                       paste(seur_obj@meta.data[[customclassif]])
-  )
-
-  Idents(seur_obj) <- "scType_prelim_ann"
-
-  if (dge == TRUE) {
-    Idents(seur_obj) <- customclassif
-    markers <- FindAllMarkers(seur_obj,
-        min.pct = min_pct,
-        test.use = test_use,
-        assay = assay_use,
-        only.pos = TRUE,
-        logfc.threshold = logfc_threshold
-      )
-  }
-
-
-  levels <- levels(as.factor(markers$cluster))
-
-
-  if ("Unknown" %in% levels(as.factor(seur_obj@meta.data[[customclassif]]))) {
-    print("debug 1")
-
-    level_list <- list()
-      for (g in 1:length(levels)) {
-        level_list[g] <- grepl("Unknown", levels[g], fixed = FALSE)
-        print("debug A")
-      }
-
-      unknown_levels <- levels[unlist(level_list)]
-
-
-      if (length(unknown_levels) > 0) {
-        print("debug B")
-        for (o in 1:length(unknown_levels)) {
-          temp_dat <- subset(markers, markers$cluster == unknown_levels[o])
-          fil_temp <- subset(
-            temp_dat,
-            temp_dat$p_val_adj < 0.05 &
-              temp_dat$avg_log2FC > 1.5
-          )
-
-          cell_type_list <- names(gs_list$gs_positive)
-
-          TRUE_count <- FALSE # This will allow below to identify cases where no
-                              # improved annotation is possible
-          for (l in 1:length(cell_type_list)) {
-            print("debug C")
-            curr_ct <- cell_type_list[l]
-            bool <- fil_temp$gene %in% gs_list$gs_positive[[curr_ct]]
-            print(summary(bool))
-
-            fil_mark <- fil_temp[bool, ]
-
-            if(l == length(cell_type_list) & TRUE_count == FALSE){
-              new_annot = unknown_levels[o]
-            }
-
-
-            if (nrow(fil_mark) > 0 &
-                nrow(fil_mark) > length(gs_list$gs_positive[[curr_ct]]) / proportion) {
-              print("debug D")
-              TRUE_count <- TRUE
-              if (exists("df_annot") == FALSE) {
-                df_annot <- data.frame(
-                  cluster = unknown_levels[o],
-                  new_annot = curr_ct
-                )
-              } else{
-                print("debug E")
-                df_prelim <- data.frame(
-                  cluster = unknown_levels[o],
-                  new_annot = curr_ct
-                )
-                df_annot <- rbind(df_annot, df_prelim)
-              }
-            }
-
-          markers_add <- merge(markers, df_annot,
-            by = "cluster",
-            all = TRUE
-          )
-
-          print("debug 2")
-
-          markers_add$RNAseqEr_ann <- ifelse(markers_add$cluster %in% unknown_levels,
-            paste(markers_add$new_annot),
-            paste(markers_add$cluster)
-          )
-
-          print("debug 3")
-          write.csv(markers_add, paste0(marker_dir,
-                                        "/ScType_cluster_markers_",
-                                        ident_use,
-                                        ".csv"))
-
-        if("RNAseqEr_annotation" %in% names(seur_obj@meta.data)){
-          df_save <- data.frame(
-            scType_prelim_ann = markers_add$cluster,
-            RNAseqEr_annotation = markers_add$RNAseqEr_ann
-          )
-          df_save_uniq <- unique(df_save)
-
-          met_dat <- seur_obj@meta.data
-
-          new_met_dat <- merge(met_dat,
-            df_save_uniq,
-            by ="scType_prelim_ann",
-            all = TRUE
-          )
-
-          print("debug 4")
-
-          print(head(new_met_dat))
-
-          new_met_dat <- new_met_dat[match(
-            met_dat$scType_prelim_ann,
-            new_met_dat$scType_prelim_ann
-          ), ]
-
-
-          bool <- grepl("RNAseqEr_annotation", names(new_met_dat))
-          ann_use <- as.data.frame(new_met_dat[, bool])
-
-          print("debug 5")
-
-         if(ncol(ann_use) > 1){
-            ann_use <- as.data.frame(ann_use[,2])
-         }
-          names(ann_use) <- "RNAseqEr_annotation"
-
-          print("debug 6")
-
-
-          #seur_obj@meta.data$RNAseqEr_annotation <- new_met_dat$RNAseqEr_annotation
-          seur_obj@meta.data$RNAseqEr_annotation <- ann_use$RNAseqEr_annotation
-        }else{
-          seur_obj@meta.data$RNAseqEr_annotation <- seur_obj@meta.data[[customclassif]]
-          write.csv(markers, paste0(marker_dir,
-                                    "/ScType_cluster_markers_",
-                                    ident_use,
-                                    ".csv"))
-            }
-          }
-        }
-        }else{
-          seur_obj@meta.data$RNAseqEr_annotation <- seur_obj@meta.data[[customclassif]]
-          write.csv(markers, paste0(marker_dir,
-                                        "/ScType_cluster_markers_",
-                                        ident_use,
-                                        ".csv"))
-        }
-
-      print("debug 7")
-
-
-         if("Unknown" %in% levels(as.factor(seur_obj@meta.data[[customclassif]]))){
-           if(exists("unknown_levels")){
-             if(length(unknown_levels) > 1){
-              seur_obj@meta.data$RNAseqEr_annotation_detailed <-
-                ifelse(seur_obj@meta.data$ScType_annotation == "Unknown",
-                    paste(seur_obj@meta.data$RNAseqEr_annotation,
-                          seur_obj@meta.data[[ident_use]],
-                          sep = "_"),
-                    paste(seur_obj@meta.data$RNAseqEr_annotation))
-
-                    dim_plot <- DimPlot(seur_obj,
-                                  group.by = "RNAseqEr_annotation",
-                                  cols = colours,
-                                  label = TRUE)
-                     print(dim_plot)
-
-                     pdf(paste0(dim_plot_dir, "/RNAseqEr_annotated.pdf"),
-                          paper = "a4", width = plot_width, height = plot_height
-                          )
-
-                    print(dim_plot)
-                     dev.off()
-
-                    dim_plot <- DimPlot(seur_obj,
-                                         group.by = "RNAseqEr_annotation_detailed",
-                                         cols = colours,
-                                         label = TRUE)
-                     print(dim_plot)
-
-                     print("debug 8")
-
-                     pdf(paste0(dim_plot_dir, "/RNAseqEr_annotated_detailed.pdf"),
-                         paper = "a4", width = plot_width, height = plot_height)
-                     print(dim_plot)
-
-                     dev.off()
-           }
-           }
-         }
-         return(seur_obj)
-  }
-}
-
-
-
-
-=======
   # Check if ident_use exists in metadata
   if (!(ident_use %in% colnames(seur_obj@meta.data))) {
     stop(paste0("Error: '", ident_use, "' not found in the metadata of the Seurat object. ",
@@ -370,14 +112,17 @@ annotate_seqEr <- function(seur_obj,
                 "Please run ScaleData() before using this function."))
   }
   
+  # Test whether plot_reduction is in seurat obj
+  plot_reduction <- check_dimred_name(seur_obj = seur_obj,
+                                      plot_reduction = plot_reduction)
   
   # Load required ScType functions
   source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/gene_sets_prepare.R")
   source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/sctype_score_.R")
   
   # Create directories for output
-  dim_plot_dir <- paste0(save_dir, "outs/", dir_lab, "/plots/ScType_Annotated_plot")
-  marker_dir <- paste0(save_dir, "outs/", dir_lab, "/tables/DGE/broad_celltype_markers")
+  dim_plot_dir <- paste0(save_dir, "/outs/", dir_lab, "/plots/ScType_Annotated_plot")
+  marker_dir <- paste0(save_dir, "/outs/", dir_lab, "/tables/DGE/broad_celltype_markers")
   
   if (!dir.exists(dim_plot_dir)) {
     dir.create(dim_plot_dir, recursive = TRUE)
@@ -389,7 +134,7 @@ annotate_seqEr <- function(seur_obj,
     print("New directory created for saving differential gene expression results.")
   }
   
-  # Step 1: Prepare gene sets
+  # Step 1: Prepare gene sets for ScType
   if (custom_ref_genes == FALSE) {
     db_ <- "https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/ScTypeDB_full.xlsx"
   } else {
@@ -398,7 +143,7 @@ annotate_seqEr <- function(seur_obj,
   
   gs_list <- gene_sets_prepare(db_, tissue_ref)
   
-  # Step 2: Initial ScType annotation on expressed genes
+  # Step 2: Initial ScType annotation
   es_max <- sctype_score(
     scRNAseqData = seur_obj[[assay_use]]@scale.data, 
     scaled = TRUE,
@@ -430,12 +175,13 @@ annotate_seqEr <- function(seur_obj,
     top_n(n = 1, wt = scores)
   
   # Mark clusters with low confidence scores as "Unknown"
-  # Now using the user-configurable unknown_threshold parameter
   sctype_scores$type[as.numeric(as.character(sctype_scores$scores)) < 
-                       sctype_scores$ncells * unknown_threshold] <- "Unknown"
+                     sctype_scores$ncells / low_confident_thres] <- "Unknown"
+  
+  print("Initial ScType annotation results:")
   print(sctype_scores[, 1:3])
   
-  # Add ScType annotation to Seurat object
+  # Add initial ScType annotation to Seurat object
   seur_obj@meta.data[[customclassif]] <- ""
   for (j in unique(sctype_scores$cluster)) {
     cl_type <- sctype_scores[sctype_scores$cluster == j, ]
@@ -448,19 +194,22 @@ annotate_seqEr <- function(seur_obj,
                 reduction = plot_reduction,
                 label = plot_label,
                 repel = plot_repel,
-                group.by = customclassif)
+                group.by = customclassif,
+                cols = colours)
   
-  pdf(paste0(dim_plot_dir, "/ScType_annotated.pdf"),
+  pdf(paste0(dim_plot_dir, "/ScType_initial_annotation.pdf"),
       paper = "a4", width = plot_width, height = plot_height)
   print(p1)
   dev.off()
   
-  # Step 3: Perform DE analysis if requested
-  if (dge) {
-    # Set identity for finding markers
-    Idents(seur_obj) <- ident_use
+  # Step 3: Check for Unknown clusters and perform DGE if needed
+  unknown_clusters <- unique(seur_obj@meta.data[[ident_use]][seur_obj@meta.data[[customclassif]] == "Unknown"])
+  
+  if (length(unknown_clusters) > 0 && dge == TRUE) {
+    print(paste("Found", length(unknown_clusters), "unknown clusters. Performing DGE analysis..."))
     
-    # Find markers for all clusters
+    # Perform differential gene expression between all clusters
+    Idents(seur_obj) <- ident_use
     all_markers <- FindAllMarkers(seur_obj,
                                   min.pct = min_pct,
                                   test.use = test_use,
@@ -468,35 +217,29 @@ annotate_seqEr <- function(seur_obj,
                                   only.pos = TRUE,
                                   logfc.threshold = logfc_threshold)
     
-    # Save all markers
+    # Save DGE results
     write.csv(all_markers, paste0(marker_dir, "/All_cluster_markers_", ident_use, ".csv"))
     
-    # Create preliminary annotation column combining cluster ID and ScType annotation
-    seur_obj$scType_prelim_ann <- ifelse(seur_obj@meta.data[[customclassif]] == "Unknown",
-                                         paste(seur_obj@meta.data[[ident_use]],
-                                               seur_obj@meta.data[[customclassif]],
-                                               sep = "_"),
-                                         paste(seur_obj@meta.data[[customclassif]]))
+    # Step 4: Re-annotate Unknown clusters using DGE results
+    print("Re-annotating unknown clusters using DGE results...")
     
-    # Step 4: Enhanced annotation of "Unknown" clusters using DE genes
-    unknown_clusters <- unique(seur_obj@meta.data[[ident_use]][seur_obj@meta.data[[customclassif]] == "Unknown"])
+    # Create improved annotation column (starts with initial ScType annotation)
+    seur_obj$RNAseqEr_annotation <- seur_obj@meta.data[[customclassif]]
     
-    if (length(unknown_clusters) > 0) {
-      # Initialize final annotation column
-      seur_obj$RNAseqEr_annotation <- seur_obj@meta.data[[customclassif]]
+    # Process each unknown cluster
+    for (cluster_id in unknown_clusters) {
+      print(paste("Processing unknown cluster:", cluster_id))
       
-      # Create dataframe for storing new annotations
-      annotation_df <- data.frame(cluster = character(), new_annotation = character())
+      # Get DE genes for this cluster
+      cluster_markers <- subset(all_markers, 
+                               all_markers$cluster == cluster_id & 
+                               all_markers$p_val_adj < 0.05 & 
+                               all_markers$avg_log2FC > 1.5)
       
-      # Process each unknown cluster
-      for (cluster_id in unknown_clusters) {
-        # Get DE genes for this cluster
-        cluster_markers <- subset(all_markers, all_markers$cluster == cluster_id & 
-                                    all_markers$p_val_adj < 0.05 & 
-                                    all_markers$avg_log2FC > 1.5)
-        
+      if (nrow(cluster_markers) > 0) {
+        # Find best matching cell type based on DE genes
         best_match <- NULL
-        best_match_count <- 0
+        best_match_score <- 0
         
         # Check against each cell type in our reference
         for (cell_type in names(gs_list$gs_positive)) {
@@ -505,72 +248,82 @@ annotate_seqEr <- function(seur_obj,
           required_matches <- length(gs_list$gs_positive[[cell_type]]) / proportion
           
           # If we have enough matches and it's better than previous best
-          if (matches > required_matches && matches > best_match_count) {
+          if (matches > required_matches && matches > best_match_score) {
             best_match <- cell_type
-            best_match_count <- matches
+            best_match_score <- matches
           }
         }
         
-        # If we found a match, record it
+        # Update annotation if we found a good match
         if (!is.null(best_match)) {
-          annotation_df <- rbind(annotation_df, 
-                                 data.frame(cluster = cluster_id, 
-                                            new_annotation = best_match))
+          seur_obj$RNAseqEr_annotation[seur_obj@meta.data[[ident_use]] == cluster_id] <- best_match
+          print(paste("Cluster", cluster_id, "re-annotated as:", best_match))
+        } else {
+          print(paste("Cluster", cluster_id, "remains unknown"))
         }
-      }
-      
-      # Apply new annotations to the Seurat object
-      if (nrow(annotation_df) > 0) {
-        for (i in 1:nrow(annotation_df)) {
-          cluster_id <- annotation_df$cluster[i]
-          new_label <- annotation_df$new_annotation[i]
-          
-          # Update the annotation for this cluster
-          seur_obj$RNAseqEr_annotation[seur_obj@meta.data[[ident_use]] == cluster_id] <- new_label
-        }
-        
-        # Save annotation details
-        write.csv(annotation_df, paste0(marker_dir, "/Unknown_cluster_new_annotations_", ident_use, ".csv"))
+      } else {
+        print(paste("No significant markers found for cluster", cluster_id))
       }
     }
     
-    # Create detailed annotation that includes cluster ID for remaining unknowns
-    if ("Unknown" %in% levels(as.factor(seur_obj$RNAseqEr_annotation))) {
-      seur_obj$RNAseqEr_annotation_detailed <- ifelse(
-        seur_obj$RNAseqEr_annotation == "Unknown",
-        paste(seur_obj$RNAseqEr_annotation, seur_obj@meta.data[[ident_use]], sep = "_"),
-        paste(seur_obj$RNAseqEr_annotation)
-      )
-      
-      # Plot detailed annotations
-      p3 <- DimPlot(seur_obj,
-                    group.by = "RNAseqEr_annotation_detailed",
-                    cols = colours,
-                    label = TRUE)
-      
-      pdf(paste0(dim_plot_dir, "/RNAseqEr_annotated_detailed.pdf"),
-          paper = "a4", width = plot_width, height = plot_height)
-      print(p3)
-      dev.off()
+    # Step 5: Create detailed annotation for remaining unknowns
+    seur_obj$RNAseqEr_annotation_detailed <- seur_obj$RNAseqEr_annotation
+    remaining_unknowns <- unique(seur_obj@meta.data[[ident_use]][seur_obj$RNAseqEr_annotation == "Unknown"])
+    
+    if (length(remaining_unknowns) > 0) {
+      for (cluster_id in remaining_unknowns) {
+        seur_obj$RNAseqEr_annotation_detailed[seur_obj@meta.data[[ident_use]] == cluster_id] <- 
+          paste("Unknown", cluster_id, sep = "_")
+      }
     }
     
-    # Plot final annotations
+    # Save improved annotation plot
     p2 <- DimPlot(seur_obj,
                   group.by = "RNAseqEr_annotation",
                   cols = colours,
-                  label = TRUE)
+                  label = plot_label,
+                  repel = plot_repel)
     
-    pdf(paste0(dim_plot_dir, "/RNAseqEr_annotated.pdf"),
+    pdf(paste0(dim_plot_dir, "/RNAseqEr_improved_annotation.pdf"),
         paper = "a4", width = plot_width, height = plot_height)
     print(p2)
     dev.off()
+    
+    # Save detailed annotation plot if there are remaining unknowns
+    if (length(remaining_unknowns) > 0) {
+      p3 <- DimPlot(seur_obj,
+                    group.by = "RNAseqEr_annotation_detailed",
+                    cols = colours,
+                    label = plot_label,
+                    repel = plot_repel)
+      
+      pdf(paste0(dim_plot_dir, "/RNAseqEr_detailed_annotation.pdf"),
+          paper = "a4", width = plot_width, height = plot_height)
+      print(p3)
+      dev.off()
+      
+      print(p3)
+    }
+    
+    print(p2)
+    
+  } else {
+    # If no unknown clusters or DGE disabled, just copy ScType annotation
+    seur_obj$RNAseqEr_annotation <- seur_obj@meta.data[[customclassif]]
+    seur_obj$RNAseqEr_annotation_detailed <- seur_obj@meta.data[[customclassif]]
+    
+    print("No unknown clusters found or DGE disabled. Using initial ScType annotation.")
   }
-  print(p1)
-  print(p3)
-  print(p2)
-  return(seur_obj)
   
+  # Print initial annotation plot
+  print(p1)
+  
+  # Summary
+  print("=== Annotation Summary ===")
+  print("Initial ScType annotation:")
+  print(table(seur_obj@meta.data[[customclassif]]))
+  print("Final RNAseqEr annotation:")
+  print(table(seur_obj$RNAseqEr_annotation))
+  
+  return(seur_obj)
 }
-    
-    
-
