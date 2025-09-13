@@ -34,7 +34,7 @@ export(new_dir)
 export(pairwise_dge)
 export(perform_go)
 export(plot_list)
-export(quick_RNAseqEr)
+# export(quick_RNAseqEr)  # Temporarily commented out due to syntax issues
 export(quick_manuscript)
 export(remove_clu)
 export(safe_differential_expression)
