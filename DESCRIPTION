@@ -40,7 +40,8 @@ Imports:
     ggdendro,
     stringr,
     ShinyCell,
-    dotenv
+    dotenv,
+    EnhancedVolcano
 Suggests: 
     knitr,
     rmarkdown,
